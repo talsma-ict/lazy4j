@@ -42,7 +42,7 @@ All subsequent invocations will just return _the same_ instance of `Expensive`.
 ## Getting the library
 
 Add the following dependency to your project
-or download it [directly from github](releases):
+or download it [directly from github](https://github.com/talsma-ict/lazy4j/releases):
 
 #### Maven
 
