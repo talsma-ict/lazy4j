@@ -15,6 +15,7 @@
  */
 package nl.talsmasoftware.lazy;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -25,13 +26,13 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Sjoerd Talsma
  */
-public class Lazy<T> implements Supplier<T> {
+public final class Lazy<T> implements Supplier<T> {
 
     private volatile Supplier<T> supplier;
     private volatile T result;
     private volatile RuntimeException exception;
 
-    protected Lazy(Supplier<T> supplier) {
+    private Lazy(Supplier<T> supplier) {
         this.supplier = requireNonNull(supplier, "Lazy function is <null>.");
     }
 
@@ -57,6 +58,47 @@ public class Lazy<T> implements Supplier<T> {
         return result;
     }
 
+    /**
+     * Returns whether the lazy value was already evaluated and did not throw an exception.
+     * <p>
+     * This method can be used for conditional use of lazy values in cases where forced evaluation is not required.
+     *
+     * @return {@code true} if the lazy value was already evaluated, otherwise {@code false}.
+     */
+    public boolean isAvailable() {
+        return supplier == null && exception == null;
+    }
+
+    /**
+     * Provides the lazy value to the consumer <em>if it was already evaluated</em> and will <b>not</b> eagerly
+     * evaluate the lazy value to call the consumer.
+     * <p>
+     * The consumer will not be called if the lazy value was already evaluated but threw an exception.
+     *
+     * @param consumer The consumer to call if the lazy value is already available.
+     */
+    public void ifAvailable(Consumer<T> consumer) {
+        requireNonNull(consumer, "Consumer of lazy value is <null>");
+        if (isAvailable()) consumer.accept(get());
+    }
+
+    /**
+     * Returns a new {@code Lazy} object with the result of applying the given mapping function
+     * to the value contained in this lazy object.
+     * <p>
+     * Regardless whether {@code this} lazy object was already evaluated or not,
+     * the mapping function will only be called when (and if) the returned {@code Lazy}
+     * object's {@linkplain #get()} method is called.
+     * <p>
+     * Evaluating the returned {@code Lazy} object will also trigger eager evaluation
+     * of {@code this} object.
+     *
+     * @param mapper the mapping function to lazily apply to this value
+     * @param <U>    The type of the value returned from the mapping function
+     * @return a new {@code Lazy} object with the result of applying a mapping
+     * function to the value of this {@code Lazy} value
+     * @throws NullPointerException if the mapping function is {@code null}
+     */
     public <U> Lazy<U> map(Function<? super T, ? extends U> mapper) {
         requireNonNull(mapper, "Mapper function is <null>.");
         return lazy(() -> mapper.apply(get()));

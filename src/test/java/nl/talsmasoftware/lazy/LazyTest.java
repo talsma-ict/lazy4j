@@ -106,6 +106,56 @@ public class LazyTest {
     }
 
     @Test
+    public void testIsAvailable() {
+        assertThat(mayonaise.isAvailable(), is(false));
+        assertThat(counter.get(), is(0));
+        resolve(mayonaise);
+        assertThat(mayonaise.isAvailable(), is(true));
+        assertThat(mayonaise.isAvailable(), is(true));
+        assertThat(counter.get(), is(1));
+    }
+
+    @Test
+    public void testIsAvailable_exception() {
+        assertThat(exception.isAvailable(), is(false));
+        assertThat(counter.get(), is(0));
+        resolve(exception);
+        assertThat(exception.isAvailable(), is(false));
+        assertThat(exception.isAvailable(), is(false));
+        assertThat(counter.get(), is(1));
+    }
+
+    @Test
+    public void testIfAvailable() {
+        AtomicInteger availableCounter = new AtomicInteger(0);
+        mayonaise.ifAvailable(value -> availableCounter.incrementAndGet());
+        assertThat(counter.get(), is(0));
+        assertThat(availableCounter.get(), is(0));
+
+        resolve(mayonaise);
+        mayonaise.ifAvailable(value -> availableCounter.incrementAndGet());
+        assertThat(counter.get(), is(1));
+        assertThat(availableCounter.get(), is(1));
+
+        mayonaise.ifAvailable(value -> availableCounter.incrementAndGet());
+        assertThat(counter.get(), is(1));
+        assertThat(availableCounter.get(), is(2));
+    }
+
+    @Test
+    public void testIfAvailable_exception() {
+        AtomicInteger availableCounter = new AtomicInteger(0);
+        exception.ifAvailable(value -> availableCounter.incrementAndGet());
+        assertThat(counter.get(), is(0));
+        assertThat(availableCounter.get(), is(0));
+
+        resolve(mayonaise);
+        exception.ifAvailable(value -> availableCounter.incrementAndGet());
+        assertThat(counter.get(), is(1));
+        assertThat(availableCounter.get(), is(0));
+    }
+
+    @Test
     public void testMap() {
         AtomicInteger mapCounter = new AtomicInteger(0);
         Lazy<String> reverse = mayonaise.map(counting(mapCounter, s -> new StringBuffer(s).reverse().toString()));
