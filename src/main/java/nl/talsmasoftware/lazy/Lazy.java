@@ -24,8 +24,8 @@ import static java.util.Objects.requireNonNull;
 /**
  * A generic `Lazy` class in java.
  * <p>
- * It takes a {@linkplain Supplier} for a value and wraps it
- * so that it gets called <em>only when needed first</em>.
+ * The {@link #lazy(Supplier) lazy} factory method takes a {@linkplain Supplier} for a value
+ * and wraps it so that it gets called <em>only when first-needed</em>.
  * <p>
  * A {@code Lazy} value can be {@linkplain #map(Function) mapped} or
  * {@linkplain #flatMap(Function) flat mapped} into another {@code Lazy} value.
