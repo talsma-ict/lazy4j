@@ -4,7 +4,7 @@ A generic `Lazy` class in java
 
 ## What is it?
 
-A small container class that takes a lambda and evaluates it at most once,
+A small container class that takes a supplier function and evaluates it at most once,
 but not before the result is needed.  
 `Lazy` implements the `Supplier` functional interface.
 
