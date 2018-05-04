@@ -24,13 +24,17 @@ Fortunately, it's not very difficult to create, so that's what we did.
 A small example of how this class can be used:
 
 ```java
-private static final Supplier<Expensive> SINGLETON = Lazy.lazy(Expensive::create);
+public class Example {
+    private final Supplier&lt;Expensive> expensive = Lazy.lazy(Expensive::create);
+}
 ```
 
-This will declare a `SINGLETON` constant of an `Expensive` type.  
-Initially, no expensive object is created yet.
-Only when `SINGLETON.get()` is first called, the `Expensive.create()` method is invoked, 
-but never more than once for each `Lazy` instance.
+This declares a lazy `expensive` variable.  
+Initially, no expensive object is created yet.  
+Only when `expensive.get()` is called for the first time,
+the `Expensive.create()` method is called.
+All subsequent invocations will just return _the same_ expensive instance.
+
 
 ## License
 
