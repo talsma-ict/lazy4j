@@ -35,10 +35,37 @@ Only when `expensive.get()` is called for the first time,
 the `Expensive.create()` method is called.
 All subsequent invocations will just return _the same_ instance of `Expensive`.
 
-
 ## License
 
 [Apache 2.0 license](../LICENSE)
+
+## Getting the library
+
+Add the following dependency to your project
+or download it [directly from github](releases):
+
+#### Maven
+
+```xml
+<dependency>
+    <groupId>nl.talsmasoftware</groupId>
+    <artifactId>lazy4j</artifactId>
+    <version>[see maven-central badge]</version>
+</dependency>
+```
+
+#### Gradle
+
+```groovy
+compile 'nl.talsmasoftware:lazy4j:[see maven-central badge]'
+```
+
+#### Scala
+
+```scala
+libraryDependencies += "nl.talsmasoftware" % "lazy4j" % "[see maven-central badge]"
+```
+
 
   [ci-img]: https://img.shields.io/travis/talsma-ict/lazy4j/develop.svg
   [ci]: https://travis-ci.org/talsma-ict/lazy4j
