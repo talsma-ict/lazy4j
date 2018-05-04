@@ -1,3 +1,7 @@
+[![Build Status][ci-img]][ci]
+[![Coverage Status][coveralls-img]][coveralls]
+[![Released Version][maven-img]][maven]
+
 # Lazy4J
 
 A generic `Lazy` class in java
@@ -31,3 +35,10 @@ but never more than once for each `Lazy` instance.
 ## License
 
 [Apache 2.0 license](../LICENSE)
+
+  [ci-img]: https://img.shields.io/travis/talsma-ict/lazy4j/develop.svg
+  [ci]: https://travis-ci.org/talsma-ict/lazy4j
+  [maven-img]: https://img.shields.io/maven-central/v/nl.talsmasoftware/lazy4j.svg
+  [maven]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22nl.talsmasoftware%22%20AND%20a%3A%22lazy4j%22
+  [coveralls-img]: https://coveralls.io/repos/github/talsma-ict/lazy4j/badge.svg
+  [coveralls]: https://coveralls.io/github/talsma-ict/lazy4j
