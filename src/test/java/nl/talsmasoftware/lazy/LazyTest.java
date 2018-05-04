@@ -20,24 +20,30 @@ import org.junit.Test;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.fail;
 
 public class LazyTest {
+    private AtomicInteger counter;
     private Lazy<String> mayonaise, exception;
 
     @Before
     public void setUp() {
-        mayonaise = Lazy.lazy(() -> "I've seen them do it man, they f*n drown them in that shit!");
-        exception = Lazy.lazy(() -> {
+        counter = new AtomicInteger(0);
+        mayonaise = Lazy.lazy(counting(() -> "I've seen them do it man, they f*n drown them in that shit!"));
+        exception = Lazy.lazy(counting(() -> {
             throw new IllegalStateException("Whoops!");
-        });
+        }));
     }
 
     /**
      * Resolve the lazy object, swallowing any potential LazyEvaluationExceptions.
+     * <p>
+     * Note that no distinction can be made from lazy null values and lazy exceptions.
      *
      * @param lazy The lazy object to be resolved.
      */
@@ -53,26 +59,22 @@ public class LazyTest {
      * Assert that we get a decent exception message for a {@code null} supplier.
      */
     @Test
-    public void testLazyEvaluateNull() {
+    public void testLazyNull() {
         try {
             Lazy.lazy(null);
             fail("Exception expected");
         } catch (NullPointerException expected) {
-            assertThat(expected, hasToString(containsString("Lazy supplier is <null>")));
+            assertThat(expected, hasToString(containsString("Lazy function is <null>")));
         }
     }
 
     @Test
-    public void testLazyEvaluate() {
-        final AtomicInteger count = new AtomicInteger(0);
-        final Lazy<String> chopper = Lazy.lazy(() -> {
-            count.incrementAndGet();
-            return "Whose motorcycle is that? It's a chopper baby! Whose chopper is that?";
-        });
+    public void testLazy() {
+        assertThat(counter.get(), is(0));
         for (int i = 0; i < 100; i++) {
-            assertThat(chopper.get(), equalTo("Whose motorcycle is that? It's a chopper baby! Whose chopper is that?"));
+            assertThat(mayonaise.get(), equalTo("I've seen them do it man, they f*n drown them in that shit!"));
         }
-        assertThat(count.get(), is(1));
+        assertThat(counter.get(), is(1));
     }
 
     /**
@@ -80,13 +82,11 @@ public class LazyTest {
      */
     @Test
     public void testLazyNullValue() {
-        final AtomicInteger count = new AtomicInteger(0);
-        final Lazy<String> nothing = Lazy.lazy(() -> {
-            count.incrementAndGet();
-            return null;
-        });
+        final Lazy<String> nothing = Lazy.lazy(counting(() -> null));
+        assertThat(counter.get(), is(0));
+
         for (int i = 0; i < 100; i++) assertThat(nothing.get(), is(nullValue()));
-        assertThat(count.get(), is(1));
+        assertThat(counter.get(), is(1));
     }
 
     /**
@@ -94,41 +94,90 @@ public class LazyTest {
      */
     @Test
     public void testLazyException() {
-        final AtomicInteger count = new AtomicInteger(0);
-        final Lazy<String> whoops = Lazy.lazy(() -> {
-            count.incrementAndGet();
-            throw new IllegalStateException("Whoops!");
-        });
         for (int i = 0; i < 100; i++)
             try {
-                whoops.get();
+                exception.get();
                 fail("Exception expected");
             } catch (LazyEvaluationException expected) {
                 assertThat(expected.getCause(), is(instanceOf(IllegalStateException.class)));
                 assertThat(expected.getCause().getMessage(), equalTo("Whoops!"));
             }
-        assertThat(count.get(), is(1));
+        assertThat(counter.get(), is(1));
+    }
+
+    @Test
+    public void testMap() {
+        AtomicInteger mapCounter = new AtomicInteger(0);
+        Lazy<String> reverse = mayonaise.map(counting(mapCounter, s -> new StringBuffer(s).reverse().toString()));
+        assertThat(counter.get(), is(0));
+        assertThat(mapCounter.get(), is(0));
+
+        for (int i = 0; i < 100; i++) {
+            assertThat(reverse.get(), equalTo("!tihs taht ni meht nword n*f yeht ,nam ti od meht nees ev'I"));
+        }
+        assertThat(counter.get(), is(1));
+        assertThat(mapCounter.get(), is(1));
+    }
+
+    @Test
+    public void testFlatMap() {
+        AtomicInteger mapCounter = new AtomicInteger(0);
+        AtomicInteger flatteningCounter = new AtomicInteger(0);
+        Lazy<String> reverse = mayonaise.flatMap(counting(mapCounter,
+                s -> Lazy.lazy(counting(flatteningCounter, (Supplier<String>) s::toUpperCase))));
+        assertThat(counter.get(), is(0));
+        assertThat(mapCounter.get(), is(0));
+        assertThat(flatteningCounter.get(), is(0));
+
+        for (int i = 0; i < 100; i++) {
+            assertThat(reverse.get(), equalTo("I'VE SEEN THEM DO IT MAN, THEY F*N DROWN THEM IN THAT SHIT!"));
+        }
+        assertThat(counter.get(), is(1));
+        assertThat(mapCounter.get(), is(1));
+        assertThat(flatteningCounter.get(), is(1));
     }
 
     @Test
     public void testToString_unresolved() {
         assertThat(mayonaise, hasToString(equalTo("Lazy[not yet resolved]")));
+        assertThat(counter.get(), is(0));
     }
 
     @Test
     public void testToString_unresolved_exception() {
         assertThat(exception, hasToString(equalTo("Lazy[not yet resolved]")));
+        assertThat(counter.get(), is(0));
     }
 
     @Test
     public void testToString_resolved() {
         resolve(mayonaise);
         assertThat(mayonaise, hasToString(equalTo("Lazy[I've seen them do it man, they f*n drown them in that shit!]")));
+        assertThat(counter.get(), is(1));
     }
 
     @Test
     public void testToString_resolved_exception() {
         resolve(exception);
         assertThat(exception, hasToString(equalTo("Lazy[threw exception]")));
+        assertThat(counter.get(), is(1));
+    }
+
+    private <T> Supplier<T> counting(Supplier<T> supplier) {
+        return counting(counter, supplier);
+    }
+
+    private static <T> Supplier<T> counting(AtomicInteger counter, Supplier<T> supplier) {
+        return () -> {
+            counter.incrementAndGet();
+            return supplier.get();
+        };
+    }
+
+    private static <T, U> Function<T, U> counting(AtomicInteger counter, Function<T, U> function) {
+        return input -> {
+            counter.incrementAndGet();
+            return function.apply(input);
+        };
     }
 }

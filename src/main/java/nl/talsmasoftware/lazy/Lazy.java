@@ -15,6 +15,7 @@
  */
 package nl.talsmasoftware.lazy;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
@@ -26,14 +27,12 @@ import static java.util.Objects.requireNonNull;
  */
 public class Lazy<T> implements Supplier<T> {
 
-    private final Supplier<T> supplier;
-    private volatile boolean resolved;
+    private volatile Supplier<T> supplier;
     private volatile T result;
     private volatile RuntimeException exception;
 
-    private Lazy(Supplier<T> supplier) {
-        this.supplier = requireNonNull(supplier, "Lazy supplier is <null>.");
-        this.resolved = false;
+    protected Lazy(Supplier<T> supplier) {
+        this.supplier = requireNonNull(supplier, "Lazy function is <null>.");
     }
 
     public static <T> Lazy<T> lazy(Supplier<T> supplier) {
@@ -43,13 +42,13 @@ public class Lazy<T> implements Supplier<T> {
     @Override
     public T get() {
         synchronized (this) {
-            if (!resolved) {
-                resolved = true;
+            if (supplier != null) {
                 try {
                     result = supplier.get();
                 } catch (RuntimeException supplierException) {
                     exception = supplierException;
                 }
+                supplier = null;
             }
         }
         if (exception != null) {
@@ -58,11 +57,22 @@ public class Lazy<T> implements Supplier<T> {
         return result;
     }
 
+    public <U> Lazy<U> map(Function<? super T, ? extends U> mapper) {
+        requireNonNull(mapper, "Mapper function is <null>.");
+        return lazy(() -> mapper.apply(get()));
+    }
+
+    public <U> Lazy<U> flatMap(Function<? super T, ? extends Supplier<? extends U>> mapper) {
+        requireNonNull(mapper, "Mapper function is <null>.");
+        return lazy(() -> requireNonNull(mapper.apply(get()), "Lazy supplier is <null>.").get());
+    }
+
     @Override
     public String toString() {
-        return getClass().getSimpleName() + (!resolved ? "[not yet resolved]"
-                : exception == null ? "[" + result + ']'
-                : "[threw exception]");
+        return getClass().getSimpleName() +
+                (supplier != null ? "[not yet resolved]"
+                        : exception != null ? "[threw exception]"
+                        : "[" + result + ']');
     }
 
 }
