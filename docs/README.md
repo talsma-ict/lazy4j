@@ -25,7 +25,7 @@ A small example of how this class can be used:
 
 ```java
 public class Example {
-    private final Supplier<Expensive> expensive = Lazy.lazy(Expensive::create);
+    private final Lazy<Expensive> expensive = Lazy.lazy(Expensive::create);
 }
 ```
 
