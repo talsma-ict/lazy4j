@@ -23,6 +23,14 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * A generic `Lazy` class in java.
+ * <p>
+ * It takes a {@linkplain Supplier} for a value and wraps it
+ * so that it gets called <em>only when needed first</em>.
+ * <p>
+ * A {@code Lazy} value can be {@linkplain #map(Function) mapped} or
+ * {@linkplain #flatMap(Function) flat mapped} into another {@code Lazy} value.
+ * <p>
+ * {@code Lazy} objects are thread-safe, so no {@code Lazy} instance is evaluated more than once.
  *
  * @author Sjoerd Talsma
  */
@@ -40,6 +48,13 @@ public final class Lazy<T> implements Supplier<T> {
         return new Lazy<>(supplier);
     }
 
+    /**
+     * Returns the value from this lazy object, eagerly evaluating it if necessary.
+     * <p>
+     * This method is thread-safe, so no {@code Lazy} instance is evaluated more than once.
+     *
+     * @return The evaluated value from this lazy object
+     */
     @Override
     public T get() {
         synchronized (this) {
