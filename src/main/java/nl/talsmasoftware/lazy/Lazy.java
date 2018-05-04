@@ -70,10 +70,11 @@ public final class Lazy<T> implements Supplier<T> {
     }
 
     /**
-     * Provides the lazy value to the consumer <em>if it was already evaluated</em> and will <b>not</b> eagerly
-     * evaluate the lazy value to call the consumer.
+     * Provides the lazy value to the consumer <em>if it was already evaluated</em> and
+     * will <b>not</b> eagerly evaluate the value to call the consumer.
      * <p>
-     * The consumer will not be called if the lazy value was already evaluated but threw an exception.
+     * The consumer will not be called if the lazy value was not already evaluated
+     * or threw an exception.
      *
      * @param consumer The consumer to call if the lazy value is already available.
      */
