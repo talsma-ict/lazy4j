@@ -115,8 +115,8 @@ public final class Lazy<T> implements Supplier<T> {
     }
 
     /**
-     * Returns a new {@code Lazy} object with the result of applying the given mapping function
-     * to the value contained in this lazy object.
+     * Returns a {@code Lazy} object with the result of applying the given mapping function
+     * to this lazy value.
      * <p>
      * Regardless whether {@code this} lazy object was already evaluated or not,
      * the mapping function will only be called when (and if) the returned {@code Lazy}
@@ -127,8 +127,8 @@ public final class Lazy<T> implements Supplier<T> {
      *
      * @param mapper the mapping function to lazily apply to this value
      * @param <U>    The type of the value returned from the mapping function
-     * @return a new {@code Lazy} object with the result of applying a mapping
-     * function to the value of this {@code Lazy} value
+     * @return a {@code Lazy} object with the result of applying a mapping
+     * function to the value in this {@code Lazy} instance
      * @throws NullPointerException if the mapping function is {@code null}
      */
     public <U> Lazy<U> map(Function<? super T, ? extends U> mapper) {
