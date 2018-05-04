@@ -44,6 +44,18 @@ public final class Lazy<T> implements Supplier<T> {
         this.supplier = requireNonNull(supplier, "Lazy function is <null>.");
     }
 
+    /**
+     * Create a new {@linkplain Lazy} object that calls the specified {@code supplier}
+     * only when the lazy value is first-needed.
+     * <p>
+     * For every {@link Lazy} instance, the supplier gets called <em>never or once</em>.
+     * <p>
+     * {@code Lazy} objects are thread-safe, so no {@code Lazy} instance is evaluated more than once.
+     *
+     * @param supplier The value supplier for the lazy placeholder
+     * @param <T>      The type of the lazy value
+     * @return A lazy placeholder for the supplier result that will only obtain it when needed.
+     */
     public static <T> Lazy<T> lazy(Supplier<T> supplier) {
         return new Lazy<>(supplier);
     }
