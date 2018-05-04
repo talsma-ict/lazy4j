@@ -33,7 +33,7 @@ This declares a lazy `expensive` variable.
 Initially, no expensive object is created yet: 
 Only when `expensive.get()` is called for the first time,
 the `Expensive.create()` method is called.
-All subsequent invocations will just return _the same_ expensive instance.
+All subsequent invocations will just return _the same_ instance of `Expensive`.
 
 
 ## License
