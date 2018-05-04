@@ -30,7 +30,8 @@ import static java.util.Objects.requireNonNull;
  * A {@code Lazy} value can be {@linkplain #map(Function) mapped} or
  * {@linkplain #flatMap(Function) flat mapped} into another {@code Lazy} value.
  * <p>
- * {@code Lazy} objects are thread-safe, so no {@code Lazy} instance is evaluated more than once.
+ * {@code Lazy} objects are thread-safe. For every {@link Lazy} instance,
+ * the supplier gets called either <em>never</em> or <em>once</em>.
  *
  * @author Sjoerd Talsma
  */
@@ -45,12 +46,12 @@ public final class Lazy<T> implements Supplier<T> {
     }
 
     /**
-     * Create a new {@linkplain Lazy} object that calls the specified {@code supplier}
-     * only when the lazy value is first-needed.
+     * Create a {@linkplain Lazy} object that calls the specified {@code supplier}
+     * only when the lazy value is needed for the first time. From then on, the result
+     * will be re-used by the lazy instance.
      * <p>
-     * For every {@link Lazy} instance, the supplier gets called <em>never or once</em>.
-     * <p>
-     * {@code Lazy} objects are thread-safe, so no {@code Lazy} instance is evaluated more than once.
+     * {@code Lazy} objects are thread-safe. For every {@link Lazy} instance,
+     * the supplier gets called either <em>never</em> or <em>once</em>.
      *
      * @param supplier The value supplier for the lazy placeholder
      * @param <T>      The type of the lazy value
