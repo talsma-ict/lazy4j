@@ -36,7 +36,7 @@ public class Lazy<T> implements Supplier<T> {
         this.resolved = false;
     }
 
-    public static <T> Lazy<T> evaluate(Supplier<T> supplier) {
+    public static <T> Lazy<T> lazy(Supplier<T> supplier) {
         return new Lazy<>(supplier);
     }
 

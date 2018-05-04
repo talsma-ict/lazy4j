@@ -30,8 +30,8 @@ public class LazyTest {
 
     @Before
     public void setUp() {
-        mayonaise = Lazy.evaluate(() -> "I've seen them do it man, they f*n drown them in that shit!");
-        exception = Lazy.evaluate(() -> {
+        mayonaise = Lazy.lazy(() -> "I've seen them do it man, they f*n drown them in that shit!");
+        exception = Lazy.lazy(() -> {
             throw new IllegalStateException("Whoops!");
         });
     }
@@ -55,7 +55,7 @@ public class LazyTest {
     @Test
     public void testLazyEvaluateNull() {
         try {
-            Lazy.evaluate(null);
+            Lazy.lazy(null);
             fail("Exception expected");
         } catch (NullPointerException expected) {
             assertThat(expected, hasToString(containsString("Lazy supplier is <null>")));
@@ -65,7 +65,7 @@ public class LazyTest {
     @Test
     public void testLazyEvaluate() {
         final AtomicInteger count = new AtomicInteger(0);
-        final Lazy<String> chopper = Lazy.evaluate(() -> {
+        final Lazy<String> chopper = Lazy.lazy(() -> {
             count.incrementAndGet();
             return "Whose motorcycle is that? It's a chopper baby! Whose chopper is that?";
         });
@@ -81,7 +81,7 @@ public class LazyTest {
     @Test
     public void testLazyNullValue() {
         final AtomicInteger count = new AtomicInteger(0);
-        final Lazy<String> nothing = Lazy.evaluate(() -> {
+        final Lazy<String> nothing = Lazy.lazy(() -> {
             count.incrementAndGet();
             return null;
         });
@@ -95,7 +95,7 @@ public class LazyTest {
     @Test
     public void testLazyException() {
         final AtomicInteger count = new AtomicInteger(0);
-        final Lazy<String> whoops = Lazy.evaluate(() -> {
+        final Lazy<String> whoops = Lazy.lazy(() -> {
             count.incrementAndGet();
             throw new IllegalStateException("Whoops!");
         });

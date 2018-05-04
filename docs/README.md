@@ -20,7 +20,7 @@ Fortunately, it's not very difficult to create, so that's what we did.
 A small example of how this class can be used:
 
 ```java
-private static final Supplier<Expensive> SINGLETON = Lazy.evaluate(Expensive::create);
+private static final Supplier<Expensive> SINGLETON = Lazy.lazy(Expensive::create);
 ```
 
 This will declare a `SINGLETON` constant of an `Expensive` type.  
