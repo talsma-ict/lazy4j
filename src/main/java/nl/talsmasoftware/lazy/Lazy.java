@@ -92,19 +92,22 @@ public final class Lazy<T> implements Supplier<T> {
      * This method can be used for conditional use of lazy values in cases where forced evaluation is not required.
      *
      * @return {@code true} if the lazy value was already evaluated, otherwise {@code false}.
+     * @see #ifAvailable(Consumer)
      */
     public boolean isAvailable() {
         return supplier == null && exception == null;
     }
 
     /**
-     * Provides the lazy value to the consumer <em>if it was already evaluated</em> and
-     * will <b>not</b> eagerly evaluate the value to call the consumer.
+     * Provides the lazy value to the consumer
+     * <em>if it is already {@linkplain #isAvailable() available}</em>
+     * and will <b>not</b> eagerly evaluate the value to call the consumer.
      * <p>
      * The consumer will not be called if the lazy value was not already evaluated
      * or threw an exception.
      *
      * @param consumer The consumer to call if the lazy value is already available.
+     * @see #isAvailable()
      */
     public void ifAvailable(Consumer<T> consumer) {
         requireNonNull(consumer, "Consumer of lazy value is <null>");
