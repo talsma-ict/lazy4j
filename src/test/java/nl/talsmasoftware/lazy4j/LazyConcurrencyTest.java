@@ -59,11 +59,10 @@ public class LazyConcurrencyTest {
         ExecutorService threadpool = Executors.newFixedThreadPool(threads);
         assertThat(counter.get(), is(0));
 
-        for (int proc = 0; proc < processes; proc++) {
-            threadpool.submit(() -> {
-                for (int g = 0; g < gets; g++) chopper.get();
-            });
-        }
+        final Runnable runnable = () -> {
+            for (int g = 0; g < gets; g++) chopper.get();
+        };
+        for (int proc = 0; proc < processes; proc++) threadpool.submit(runnable);
         threadpool.shutdown();
         if (!threadpool.awaitTermination(1, TimeUnit.MINUTES)) fail("Test timed out.");
 
