@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.talsmasoftware.lazy4j;
 
 /**
- * Exception indicating that a lazy evaluation went wrong.
+ * A generic {@link Lazy} class in java.
+ * <p>
+ * <img src="package.svg" alt="Lazy4J package diagram">
  *
  * @author Sjoerd Talsma
  */
-public class LazyEvaluationException extends RuntimeException {
-
-    public LazyEvaluationException(String message, Throwable cause) {
-        super(message);
-        if (cause != null) super.initCause(cause);
-    }
-
-}
+package nl.talsmasoftware.lazy4j;
