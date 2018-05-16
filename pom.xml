@@ -87,7 +87,7 @@
         <jacoco-maven-plugin.version>0.7.9</jacoco-maven-plugin.version>
         <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
-        <umldoclet.version>1.0.16</umldoclet.version>
+        <umldoclet.version>2.0.0-alpha.1</umldoclet.version>
     </properties>
 
     <build>
@@ -265,7 +265,9 @@
                             <goal>jar</goal>
                         </goals>
                         <configuration>
-                            <javadocVersion>1.8</javadocVersion>
+                            <jdkToolchain>
+                                <version>9</version>
+                            </jdkToolchain>
                             <doclet>nl.talsmasoftware.umldoclet.UMLDoclet</doclet>
                             <docletArtifact>
                                 <groupId>nl.talsmasoftware</groupId>
@@ -274,14 +276,6 @@
                             </docletArtifact>
                             <docencoding>UTF-8</docencoding>
                             <useStandardDocletOptions>true</useStandardDocletOptions>
-                            <additionalOptions>
-                                <additionalOption>-umlImageFormat SVG</additionalOption>
-                                <additionalOption>-umlCommand "hide empty fields"</additionalOption>
-                                <additionalOption>-umlCommand "hide empty methods"</additionalOption>
-                            </additionalOptions>
-                            <sourceFileExcludes>
-                                <sourceFileExclude>module-info.java</sourceFileExclude>
-                            </sourceFileExcludes>
                         </configuration>
                     </execution>
                 </executions>
