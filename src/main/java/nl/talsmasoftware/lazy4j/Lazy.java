@@ -125,8 +125,8 @@ public final class Lazy<T> implements Supplier<T> {
      * Evaluating the returned {@code Lazy} object will also trigger eager evaluation
      * of {@code this} object.
      *
-     * @param mapper the mapping function to lazily apply to this value
      * @param <U>    The type of the value returned from the mapping function
+     * @param mapper the mapping function to lazily apply to this value
      * @return a {@code Lazy} object with the result of applying a mapping
      * function to the value in this {@code Lazy} instance
      * @throws NullPointerException if the mapping function is {@code null}
@@ -136,11 +136,41 @@ public final class Lazy<T> implements Supplier<T> {
         return lazy(() -> mapper.apply(get()));
     }
 
+    /**
+     * Returns a {@code Lazy} object with the result of applying the given mapping function
+     * to this lazy value.
+     * <p>
+     * Regardless whether {@code this} lazy object was already evaluated or not,
+     * the mapping function will only be called when (and if) the returned {@code Lazy}
+     * object's {@linkplain #get()} method is called.
+     * <p>
+     * The resulting {@code Supplier} from the mapping function is
+     * eagerly evaluated (a most once) precisely when the resulting
+     * lazy value is evaluated.
+     *
+     * @param <U>    The type of the value returned by the resulting lazy reference
+     * @param mapper the mapping function to lazily apply to this value
+     * @return a {@code Lazy} object with the result of aplying a mapping
+     * function to the value in this {@code Lazy} instance, calling the resulting
+     * {@code Supplier} only when the result is eagerly evaluated.
+     * @throws NullPointerException if the mapping function is {@code null}
+     */
     public <U> Lazy<U> flatMap(Function<? super T, ? extends Supplier<? extends U>> mapper) {
         requireNonNull(mapper, "Mapper function is <null>.");
         return lazy(() -> requireNonNull(mapper.apply(get()), "Lazy supplier is <null>.").get());
     }
 
+    /**
+     * String representation of this lazy object.
+     * <ul>
+     * <li>{@code "Lazy[not yet resolved]"} if the value was not yet resolved.
+     * <li>{@code "Lazy[threw exception]"} if the value was resolved but threw an exception.
+     * <li>{@code "Lazy[<value>]"} if the value was already resolved,
+     * where {@code <value>} is equivalent to {@code Objects.toString(Lazy.get())}.
+     * </ul>
+     *
+     * @return String representation of this {@code Lazy} object.
+     */
     @Override
     public String toString() {
         return getClass().getSimpleName() +

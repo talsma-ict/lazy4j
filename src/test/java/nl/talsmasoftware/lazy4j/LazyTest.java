@@ -207,6 +207,13 @@ public class LazyTest {
     }
 
     @Test
+    public void testToString_resolved_null() {
+        Lazy<Object> lazyNull = Lazy.lazy(() -> null);
+        assertThat(lazyNull.get(), is(nullValue()));
+        assertThat(lazyNull, hasToString(equalTo("Lazy[null]")));
+    }
+
+    @Test
     public void testToString_resolved_exception() {
         resolve(exception);
         assertThat(exception, hasToString(equalTo("Lazy[threw exception]")));
