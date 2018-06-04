@@ -35,6 +35,13 @@ Only when `expensive.get()` is called for the first time,
 the `Expensive.create()` method is called.
 All subsequent invocations will just return _the same_ instance of `Expensive`.
 
+Furthermore, a testing method `isAvailable` tells whether the lazy object 
+was already resolved, along with a method `ifAvailable` that takes a consumer and
+provides it with the value _only if_ it is already available,
+_without_ eagerly fetching the value.
+
+Lazy also support `map` and `flatMap` functions.
+
 ## License
 
 [Apache 2.0 license](../LICENSE)
