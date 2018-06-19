@@ -33,8 +33,6 @@ import static java.util.Objects.requireNonNull;
  * <p>
  * {@code Lazy} objects are thread-safe. For every {@link Lazy} instance,
  * the supplier gets called either <em>never</em> or <em>once</em>.
- * <p>
- * <img src="package.svg" alt="Lazy4J package diagram">
  *
  * @author Sjoerd Talsma
  */

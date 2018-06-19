@@ -16,8 +16,6 @@
 
 /**
  * A generic {@link Lazy} class in java.
- * <p>
- * <img src="package.svg" alt="Lazy4J package diagram">
  *
  * @author Sjoerd Talsma
  */
