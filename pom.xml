@@ -76,7 +76,7 @@
         <!-- build -->
         <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
         <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
-        <maven-javadoc-plugin.version>3.0.0</maven-javadoc-plugin.version>
+        <maven-javadoc-plugin.version>3.0.1</maven-javadoc-plugin.version>
         <maven-failsafe-plugin.version>2.20.1</maven-failsafe-plugin.version>
         <maven-shade-plugin.version>3.0.0</maven-shade-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
@@ -273,8 +273,6 @@
                                 <artifactId>umldoclet</artifactId>
                                 <version>${umldoclet.version}</version>
                             </docletArtifact>
-                            <docencoding>UTF-8</docencoding>
-                            <useStandardDocletOptions>true</useStandardDocletOptions>
                         </configuration>
                     </execution>
                 </executions>
