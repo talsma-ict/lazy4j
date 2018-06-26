@@ -15,7 +15,15 @@
  */
 
 /**
- * A generic {@link Lazy} class in java.
+ * A generic {@link Lazy} class for java.
+ * <p>
+ * Java 8 defines a generic {@code Optional} type and a {@code Supplier} function for use with lambda's,
+ * but unfortunately, there is no such thing as a 'lazy supplier function that re-uses the result'.
+ * <p>
+ * This is often useful for expensive operations that need to be performed at most once,
+ * only if they are actually needed.
+ * Declaring a 'lazy supplier' function is a common pattern for this
+ * and can be easily defined with the introduction of Lambda's in Java 8.
  *
  * @author Sjoerd Talsma
  */
