@@ -24,7 +24,12 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasToString;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.fail;
 
 public class LazyTest {
@@ -126,6 +131,16 @@ public class LazyTest {
     }
 
     @Test
+    public void testGetIfAvailable() {
+        assertThat(mayonaise.getIfAvailable(), is(Optional.empty()));
+        assertThat(counter.get(), is(0));
+        resolve(mayonaise);
+        assertThat(mayonaise.getIfAvailable(), is(Optional.of("I've seen them do it man, they f*n drown them in that shit!")));
+        assertThat(mayonaise.getIfAvailable(), is(Optional.of("I've seen them do it man, they f*n drown them in that shit!")));
+        assertThat(counter.get(), is(1));
+    }
+
+    @Test
     public void testIfAvailable() {
         AtomicInteger availableCounter = new AtomicInteger(0);
         mayonaise.ifAvailable(value -> availableCounter.incrementAndGet());
@@ -149,7 +164,8 @@ public class LazyTest {
         assertThat(counter.get(), is(0));
         assertThat(availableCounter.get(), is(0));
 
-        resolve(mayonaise);
+        resolve(exception);
+        exception.ifAvailable(value -> availableCounter.incrementAndGet());
         exception.ifAvailable(value -> availableCounter.incrementAndGet());
         assertThat(counter.get(), is(1));
         assertThat(availableCounter.get(), is(0));

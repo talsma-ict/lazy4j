@@ -15,6 +15,7 @@
  */
 package nl.talsmasoftware.lazy4j;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -102,15 +103,45 @@ public final class Lazy<T> implements Supplier<T> {
     }
 
     /**
+     * Returns an optional reference to the value if it is already available,
+     * and will <b>not</b> eagerly evaluate the value otherwise,
+     * but just return {@linkplain Optional#empty()} instead.
+     * <p>
+     * The result of this method depends on the state of this lazy value
+     * but does not influence it.
+     * <p>
+     * <b>Please note:</b> <em>This method cannot be used to determine whether or
+     * not the lazy value has already been evaluated.
+     * Please use {@linkplain #isAvailable()} for that.
+     * A lazy object that evaluates to {@code null} can be evaluated
+     * and will still result in {@linkplain Optional#empty()}.</em>
+     *
+     * @return An optional wrapper for the value if it has already been evaluated
+     * and evaluates to non-{@code null}, or {@code Optional.empty()} otherwise.
+     * @see #isAvailable()
+     * @see #ifAvailable(Consumer)
+     */
+    public Optional<T> getIfAvailable() {
+        return isAvailable() ? Optional.ofNullable(get()) : Optional.empty();
+    }
+
+    /**
      * Provides the lazy value to the consumer
      * <em>if it is already {@linkplain #isAvailable() available}</em>
      * and will <b>not</b> eagerly evaluate the value to call the consumer.
      * <p>
      * The consumer will not be called if the lazy value was not already evaluated
      * or threw an exception.
+     * <p>
+     * <b>Please note:</b> <em>There is a difference between this method
+     * and calling {@code getIfAvailable().ifPresent(consumer)}. If the lazy value
+     * {@linkplain #isAvailable() is available} but evaluates to {@code null},
+     * {@code ifAvailable(consumer)} will get called with evaluated value {@code null},
+     * but {@code getIfAvailable().ifPresent(consumer)} will not get called with {@code null}</em>
      *
      * @param consumer The consumer to call if the lazy value is already available.
      * @see #isAvailable()
+     * @see #getIfAvailable()
      */
     public void ifAvailable(Consumer<T> consumer) {
         requireNonNull(consumer, "Consumer of lazy value is <null>");

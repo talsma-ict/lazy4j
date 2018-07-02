@@ -36,9 +36,12 @@ the `Expensive.create()` method is called.
 All subsequent invocations will just return _the same_ instance of `Expensive`.
 
 Furthermore, a testing method `isAvailable` tells whether the lazy object 
-was already resolved, along with a method `ifAvailable` that takes a consumer and
-provides it with the value _only if_ it is already available,
-_without_ eagerly fetching the value.
+was already resolved.  
+A method `ifAvailable` takes a consumer and provides it with the value 
+_only if_ it is already available, _without_ eagerly fetching the value.  
+Similarly, method `getIfAvailable` returns an `Optional` reference to
+the value _only if_ it is already available _and_ non-`null`, 
+or `Optional.empty` otherwise.
 
 Lazy also support `map` and `flatMap` functions.
 
