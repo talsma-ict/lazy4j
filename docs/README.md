@@ -1,6 +1,6 @@
 [![Build Status][ci-img]][ci]
 [![Coverage Status][coveralls-img]][coveralls]
-[![Released Version][maven-img]][maven]
+[![Maven-central Version][maven-img]][maven]
 
 # Lazy4J
 
@@ -80,6 +80,6 @@ libraryDependencies += "nl.talsmasoftware" % "lazy4j" % "[see maven-central badg
   [ci-img]: https://img.shields.io/travis/talsma-ict/lazy4j/develop.svg
   [ci]: https://travis-ci.org/talsma-ict/lazy4j
   [maven-img]: https://img.shields.io/maven-central/v/nl.talsmasoftware/lazy4j.svg
-  [maven]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22nl.talsmasoftware%22%20AND%20a%3A%22lazy4j%22
+  [maven]: http://mvnrepository.com/artifact/nl.talsmasoftware/lazy4j
   [coveralls-img]: https://coveralls.io/repos/github/talsma-ict/lazy4j/badge.svg
   [coveralls]: https://coveralls.io/github/talsma-ict/lazy4j
