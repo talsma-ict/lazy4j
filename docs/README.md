@@ -1,6 +1,7 @@
 [![Build Status][ci-img]][ci]
 [![Coverage Status][coveralls-img]][coveralls]
 [![Maven-central Version][maven-img]][maven]
+[![JavaDoc][javadoc-img]][javadoc]
 
 # Lazy4J
 
