@@ -18,11 +18,13 @@ package nl.talsmasoftware.lazy4j;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
@@ -59,10 +61,22 @@ public class LazyConcurrencyTest {
         ExecutorService threadpool = Executors.newFixedThreadPool(threads);
         assertThat(counter.get(), is(0));
 
+        final CountDownLatch latch = new CountDownLatch(1);
         final Runnable runnable = () -> {
-            for (int g = 0; g < gets; g++) chopper.get();
+            try {
+                for (int g = 0; g < gets; g++) {
+                    latch.await(5, SECONDS);
+                    chopper.get();
+                }
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw new AssertionError("Interrupted waiting for latch!", ie);
+            }
         };
+
         for (int proc = 0; proc < processes; proc++) threadpool.submit(runnable);
+        Thread.sleep(SECONDS.toMillis(1));
+        latch.countDown();
         threadpool.shutdown();
         if (!threadpool.awaitTermination(1, TimeUnit.MINUTES)) fail("Test timed out.");
 

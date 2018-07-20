@@ -64,6 +64,26 @@ public final class Lazy<T> implements Supplier<T> {
     }
 
     /**
+     * Eagerly evaluates the lazy supplier (at most once)
+     * <p>
+     * Please note: this uses double-checked locking which is safe in modern JVMs
+     */
+    private void forceEagerEvaluation() {
+        if (supplier != null) {
+            synchronized (this) {
+                if (supplier != null) {
+                    try {
+                        result = supplier.get();
+                    } catch (RuntimeException supplierException) {
+                        exception = supplierException;
+                    }
+                    supplier = null;
+                }
+            }
+        }
+    }
+
+    /**
      * Returns the value from this lazy object, eagerly evaluating it if necessary.
      * <p>
      * This method is thread-safe, so no {@code Lazy} instance is evaluated more than once.
@@ -74,16 +94,7 @@ public final class Lazy<T> implements Supplier<T> {
      */
     @Override
     public T get() {
-        synchronized (this) {
-            if (supplier != null) {
-                try {
-                    result = supplier.get();
-                } catch (RuntimeException supplierException) {
-                    exception = supplierException;
-                }
-                supplier = null;
-            }
-        }
+        forceEagerEvaluation();
         if (exception != null) {
             throw new LazyEvaluationException("Could not evaluate lazy value: " + exception.getMessage(), exception);
         }
