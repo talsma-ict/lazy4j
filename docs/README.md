@@ -37,8 +37,7 @@ All subsequent invocations will return _the same_ instance of `Expensive`.
 Furthermore, `isAvailable()` tells whether the lazy object is resolved already,
 `ifAvailable(Consumer<T>)` provides the lazy value to a consumer
 _only if_ it is already available. `getIfAvailable()` returns 
-an `Optional` reference _if the value_ is available non-`null`, 
-or `Optional.empty` otherwise.
+an `Optional` reference _if the value_ is available.
 
 Lazy also support `map` and `flatMap` functions.
 
