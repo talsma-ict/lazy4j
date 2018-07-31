@@ -30,6 +30,7 @@ before_install:
   - echo "https://$GH_TOKEN:@github.com" > .git/credentials
 
 install:
+  - git submodule --quiet update --init --merge --recursive
   - ./mvnw --version
 
 script:
