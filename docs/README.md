@@ -39,11 +39,7 @@ Furthermore, `isAvailable()` tells whether the lazy object is resolved already,
 _only if_ it is already available. `getIfAvailable()` returns 
 an `Optional` reference _if the value_ is available.
 
-Lazy also support `map` and `flatMap` functions.
-
-## License
-
-[Apache 2.0 license](../LICENSE)
+Lazy also supports `map` and `flatMap` functions.
 
 ## Getting the library
 
@@ -71,6 +67,11 @@ compile 'nl.talsmasoftware:lazy4j:[see maven-central badge]'
 ```scala
 libraryDependencies += "nl.talsmasoftware" % "lazy4j" % "[see maven-central badge]"
 ```
+
+## License
+
+[Apache 2.0 license](../LICENSE)
+
 
 
   [ci-img]: https://travis-ci.org/talsma-ict/lazy4j.svg?branch=develop
