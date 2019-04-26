@@ -11,7 +11,7 @@ A generic `Lazy` class in java
 
 A small container class that takes a supplier function and evaluates it at most once,
 but not before the result is needed.  
-`Lazy` implements the `Supplier` functional interface.
+`Lazy` wraps the `Supplier` functional interface.
 
 ## Why?
 
@@ -37,7 +37,7 @@ All subsequent invocations will return _the same_ instance of `Expensive`.
 Lazy provides `isAvailable`, `map`, `flatMap`, `ifAvailable` functions.  
 Please refer to the [Lazy class documentation][lazy-javadoc-page] for full descriptions.
 
-## Getting the library
+## Getting the class
 
 Add the following dependency to your project
 or download it [directly from github](https://github.com/talsma-ict/lazy4j/releases):
