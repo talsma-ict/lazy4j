@@ -34,12 +34,8 @@ This declares a lazy `expensive` variable without creating an expensive object y
 Only when `get()` is called for the first time, the `Expensive.create()` method is called.  
 All subsequent invocations will return _the same_ instance of `Expensive`.
 
-Furthermore, `isAvailable()` tells whether the lazy object is resolved already,
-`ifAvailable(Consumer<T>)` provides the lazy value to a consumer
-_only if_ it is already available. `getIfAvailable()` returns 
-an `Optional` reference _if the value_ is available.
-
-Lazy also supports `map` and `flatMap` functions.
+Lazy provides `isAvailable`, `map`, `flatMap`, `ifAvailable` functions.  
+Please refer to the [Lazy class documentation][lazy-javadoc-page] for full descriptions.
 
 ## Getting the library
 
@@ -81,5 +77,6 @@ libraryDependencies += "nl.talsmasoftware" % "lazy4j" % "[see maven-central badg
   [coveralls-img]: https://coveralls.io/repos/github/talsma-ict/lazy4j/badge.svg
   [coveralls]: https://coveralls.io/github/talsma-ict/lazy4j
   [javadoc-img]: https://www.javadoc.io/badge/nl.talsmasoftware/lazy4j.svg
-  [javadoc]: https://www.javadoc.io/doc/nl.talsmasoftware/lazy4j 
+  [javadoc]: https://www.javadoc.io/doc/nl.talsmasoftware/lazy4j
+  [lazy-javadoc-page]: https://javadoc.io/page/nl.talsmasoftware/lazy4j/latest/nl/talsmasoftware/lazy4j/Lazy.html
   
