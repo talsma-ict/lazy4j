@@ -15,8 +15,8 @@
  */
 package nl.talsmasoftware.lazy4j;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -24,7 +24,7 @@ import java.util.function.Supplier;
 import static nl.talsmasoftware.lazy4j.Lazy.lazy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class MaxRetryTest {
     private static final AtomicLong counter = new AtomicLong(0L);
@@ -33,7 +33,7 @@ public class MaxRetryTest {
         throw new IllegalStateException("Whoops!");
     };
 
-    @Before
+    @BeforeEach
     public void resetCounter() {
         counter.set(0L);
     }

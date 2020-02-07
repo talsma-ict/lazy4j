@@ -15,8 +15,8 @@
  */
 package nl.talsmasoftware.lazy4j;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Sjoerd Talsma
@@ -37,7 +37,7 @@ public class LazyConcurrencyTest {
     private AtomicInteger counter;
     private Lazy<String> chopper;
 
-    @Before
+    @BeforeEach
     public void setup() {
         counter = new AtomicInteger(0);
         chopper = Lazy.lazy(() -> {

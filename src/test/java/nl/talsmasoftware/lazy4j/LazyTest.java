@@ -15,8 +15,8 @@
  */
 package nl.talsmasoftware.lazy4j;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,13 +30,13 @@ import static org.hamcrest.Matchers.hasToString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class LazyTest {
     private AtomicInteger counter;
     private Lazy<String> mayonaise, exception;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         counter = new AtomicInteger(0);
         mayonaise = Lazy.lazy(counting(() -> "I've seen them do it man, they f*n drown them in that shit!"));
