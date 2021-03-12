@@ -1,4 +1,4 @@
-[![Build Status][ci-img]][ci]
+[![CI build][ci-img]][ci]
 [![Coverage Status][coveralls-img]][coveralls]
 [![Maven Version][maven-img]][maven]
 [![JavaDoc][javadoc-img]][javadoc]
@@ -66,12 +66,11 @@ libraryDependencies += "nl.talsmasoftware" % "lazy4j" % "[see maven-central badg
 
 ## License
 
-[Apache 2.0 license](../LICENSE)
+[Apache 2.0 license](LICENSE)
 
 
-
-  [ci-img]: <https://travis-ci.org/talsma-ict/lazy4j.svg?branch=develop>
-  [ci]: <https://travis-ci.org/talsma-ict/lazy4j>
+  [ci-img]: https://github.com/talsma-ict/lazy4j/actions/workflows/ci-build.yml/badge.svg
+  [ci]: https://github.com/talsma-ict/lazy4j/actions/workflows/ci-build.yml
   [maven-img]: <https://img.shields.io/maven-central/v/nl.talsmasoftware/lazy4j>
   [maven]: <http://mvnrepository.com/artifact/nl.talsmasoftware/lazy4j>
   [coveralls-img]: <https://coveralls.io/repos/github/talsma-ict/lazy4j/badge.svg>
