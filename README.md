@@ -66,7 +66,7 @@ libraryDependencies += "nl.talsmasoftware" % "lazy4j" % "[see maven-central badg
 
 ## License
 
-[Apache 2.0 license](../LICENSE)
+[Apache 2.0 license](LICENSE)
 
 
 
