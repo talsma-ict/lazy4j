@@ -175,15 +175,25 @@
                 <executions>
                     <execution>
                         <id>default-compile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>compile-module-info</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
                         <configuration>
                             <jdkToolchain>
-                                <version>9</version>
+                                <version>[9,)</version>
                             </jdkToolchain>
                             <release>9</release>
+                            <includes>
+                                <include>module-info.java</include>
+                            </includes>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>base-compile</id>
+                        <id>compile-java8-classes</id>
                         <goals>
                             <goal>compile</goal>
                         </goals>

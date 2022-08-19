@@ -9,8 +9,8 @@ A generic `Lazy` class in java
 
 ## What is it?
 
-A small container class that takes a supplier function and evaluates it at most once,
-but not before the result is needed.  
+A wrapper for a `Supplier` function that evaluates it lazily when it is first needed,
+remembering the result so the wrapped supplier does not get called again.  
 `Lazy` wraps the `Supplier` functional interface.
 
 ## Why?
@@ -34,7 +34,12 @@ This declares a lazy `expensive` variable without creating an expensive object y
 Only when `get()` is called for the first time, the `Expensive.create()` method is called.  
 All subsequent invocations will return _the same_ instance of `Expensive`.
 
-Lazy provides `isAvailable`, `map`, `flatMap`, `ifAvailable` functions.  
+Lazy provides the following methods:
+- `isAvailable` returning whether the lazy value is already available. 
+- `map` applies a function on the lazy result.
+- `flatMap` applies a function that itself returns a supplier.
+- `ifAvailable` runs a function only if the lazy value is already available.
+
 Please refer to the [Lazy class documentation][lazy-javadoc-page] for full descriptions.
 
 ## Getting the class

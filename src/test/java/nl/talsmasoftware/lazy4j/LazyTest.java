@@ -24,12 +24,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasToString;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class LazyTest {
@@ -107,7 +102,7 @@ public class LazyTest {
                 assertThat(expected.getCause(), is(instanceOf(IllegalStateException.class)));
                 assertThat(expected.getCause().getMessage(), equalTo("Whoops!"));
             }
-        assertThat(counter.get(), is(1));
+        assertThat(counter.get(), is(100));
     }
 
     @Test
@@ -230,9 +225,9 @@ public class LazyTest {
     }
 
     @Test
-    public void testToString_resolved_exception() {
+    public void testToString_unresolved_due_to_exception() {
         resolve(exception);
-        assertThat(exception, hasToString(equalTo("Lazy[threw exception]")));
+        assertThat(exception, hasToString(equalTo("Lazy[not yet resolved]")));
         assertThat(counter.get(), is(1));
     }
 
