@@ -65,15 +65,17 @@ public final class Lazy<T> implements Supplier<T> {
      * only when the lazy value is needed for the first time.
      * From then on, the result is re-used by the lazy instance.
      * <p>
-     * {@code Lazy} objects are thread-safe. For every {@link Lazy} instance,
-     * the supplier gets called either <em>never</em> or <em>once</em>.
+     * {@code Lazy} objects are thread-safe.
+     * <p>
+     * If the supplier throws an exception, the supplier function will be tried again
+     * on the next invocation.
      *
      * @param supplier The value supplier for the lazy placeholder
      * @param <T>      The type of the lazy value
      * @return A lazy placeholder for the supplier result that will only obtain it when needed.
      */
     public static <T> Lazy<T> lazy(Supplier<T> supplier) {
-        return lazy(0, supplier);
+        return lazy(Integer.MAX_VALUE, supplier);
     }
 
     /**
@@ -90,7 +92,10 @@ public final class Lazy<T> implements Supplier<T> {
      * @param supplier      The value supplier for the lazy placeholder
      * @param <T>           The type of the lazy value
      * @return A lazy placeholder for the supplier result that will only obtain it when needed.
+     * @deprecated In the next major version, the {@code maxRetryCount} will be phased out and the
+     * lazy wrapper will <em>not</em> remember exception result anymore and retry indefinitely.
      */
+    @Deprecated
     public static <T> Lazy<T> lazy(int maxRetryCount, Supplier<T> supplier) {
         return new Lazy<>(maxRetryCount, supplier);
     }
