@@ -24,7 +24,12 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasToString;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class LazyTest {
@@ -50,7 +55,7 @@ public class LazyTest {
     private static <T> Optional<T> resolve(Lazy<T> lazy) {
         try {
             return Optional.ofNullable(lazy.get());
-        } catch (LazyEvaluationException expected) {
+        } catch (RuntimeException expected) {
             return Optional.empty();
         }
     }
@@ -98,9 +103,9 @@ public class LazyTest {
             try {
                 exception.get();
                 fail("Exception expected");
-            } catch (LazyEvaluationException expected) {
-                assertThat(expected.getCause(), is(instanceOf(IllegalStateException.class)));
-                assertThat(expected.getCause().getMessage(), equalTo("Whoops!"));
+            } catch (RuntimeException expected) {
+                assertThat(expected, is(instanceOf(IllegalStateException.class)));
+                assertThat(expected.getMessage(), equalTo("Whoops!"));
             }
         assertThat(counter.get(), is(100));
     }
