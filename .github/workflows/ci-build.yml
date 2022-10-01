@@ -27,7 +27,7 @@ jobs:
           GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
       - name: Setup Graphviz
         run: sudo apt-get install graphviz
-      - name: Set up JDK 8 for compiling Java 5 compatible bytecode
+      - name: Set up JDK 8 for compiling Java 8 compatible bytecode
         id: setup-java-8
         uses: actions/setup-java@v1
         with:
