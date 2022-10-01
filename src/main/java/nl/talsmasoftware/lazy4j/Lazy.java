@@ -63,12 +63,12 @@ public final class Lazy<T> implements Supplier<T> {
     /**
      * Create a {@linkplain Lazy} object that calls the specified {@code supplier}
      * only when the lazy value is needed for the first time.
-     * From then on, the result is re-used by the lazy instance.
+     * From the first successful(*) call, the result is re-used by the lazy instance.
      * <p>
      * {@code Lazy} objects are thread-safe.
      * <p>
-     * If the supplier throws an exception, the supplier function will be tried again
-     * on the next invocation.
+     * (*) If the supplier throws an exception, the function call will be tried again
+     * on the next invocation, until no exception is thrown.
      *
      * @param supplier The value supplier for the lazy placeholder
      * @param <T>      The type of the lazy value
@@ -99,7 +99,6 @@ public final class Lazy<T> implements Supplier<T> {
     public static <T> Lazy<T> lazy(int maxRetryCount, Supplier<T> supplier) {
         return new Lazy<>(maxRetryCount, supplier);
     }
-
 
     /**
      * Eagerly evaluates the lazy supplier (at most once)
