@@ -38,6 +38,7 @@ import static java.util.Objects.requireNonNull;
  * There is one exception to this rule; if a RuntimeException is thrown
  * the value is re-evaluated until the result is obtained without an exception.
  *
+ * @param <T> The type that is lazily evaluated.
  * @author Sjoerd Talsma
  */
 public final class Lazy<T> implements Supplier<T> {
