@@ -195,7 +195,7 @@ public final class Lazy<T> implements Supplier<T> {
      *
      * @param <U>    The type of the value returned by the resulting lazy reference
      * @param mapper the mapping function to lazily apply to this value
-     * @return a {@code Lazy} object with the result of aplying a mapping
+     * @return a {@code Lazy} object with the result of applying a mapping
      * function to the value in this {@code Lazy} instance, calling the resulting
      * {@code Supplier} only when the result is eagerly evaluated.
      * @throws NullPointerException if the mapping function is {@code null}
@@ -209,7 +209,6 @@ public final class Lazy<T> implements Supplier<T> {
      * String representation of this lazy object.
      * <ul>
      * <li>{@code "Lazy[not yet resolved]"} if the value was not yet resolved.
-     * <li>{@code "Lazy[threw exception]"} if the value was resolved but threw an exception.
      * <li>{@code "Lazy[<value>]"} if the value was already resolved,
      * where {@code <value>} is equivalent to {@code Objects.toString(Lazy.get())}.
      * </ul>
