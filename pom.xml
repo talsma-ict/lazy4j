@@ -71,7 +71,7 @@
         <junit.version>5.9.1</junit.version>
         <hamcrest.version>2.2</hamcrest.version>
         <slf4j.version>2.0.3</slf4j.version>
-        <logback.version>1.4.1</logback.version>
+        <logback.version>1.4.3</logback.version>
 
         <!-- build -->
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
