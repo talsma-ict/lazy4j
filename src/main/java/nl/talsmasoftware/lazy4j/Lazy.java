@@ -218,8 +218,7 @@ public final class Lazy<T> implements Supplier<T> {
      */
     @Override
     public String toString() {
-        return getClass().getSimpleName() +
-                (supplier != null ? "[not yet resolved]" : "[" + result + ']');
+        return getClass().getSimpleName() + (isAvailable() ? "[" + get() + ']' : "[not yet resolved]");
     }
 
 }
