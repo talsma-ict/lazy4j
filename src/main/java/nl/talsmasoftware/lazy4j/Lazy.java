@@ -47,15 +47,6 @@ public final class Lazy<T> implements Supplier<T> {
     private volatile T result;
 
     /**
-     * Constructor for unevaluated lazy object.
-     *
-     * @param supplier The supplier (required)
-     */
-    private Lazy(Supplier<T> supplier) {
-        this.supplier = requireNonNull(supplier, "Lazy function is <null>.");
-    }
-
-    /**
      * Create a {@linkplain Lazy} object that calls the specified {@code supplier}
      * only when the lazy value is needed for the first time.
      * From the first successful(*) call, the result is re-used by the lazy instance.
@@ -71,6 +62,15 @@ public final class Lazy<T> implements Supplier<T> {
      */
     public static <T> Lazy<T> lazy(Supplier<T> supplier) {
         return new Lazy<>(supplier);
+    }
+
+    /**
+     * Constructor for unevaluated lazy object.
+     *
+     * @param supplier The supplier (required)
+     */
+    private Lazy(Supplier<T> supplier) {
+        this.supplier = requireNonNull(supplier, "Lazy function is <null>.");
     }
 
     /**
