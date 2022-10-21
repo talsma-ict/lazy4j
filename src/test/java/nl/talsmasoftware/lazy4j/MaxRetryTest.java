@@ -47,68 +47,14 @@ public class MaxRetryTest {
         try {
             lazy.get();
             fail("LazyEvaluationException expected");
-        } catch (LazyEvaluationException expected) {
-            assertThat(expected.getCause().getMessage(), is("Whoops!"));
+        } catch (RuntimeException expected) {
+            assertThat(expected.getMessage(), is("Whoops!"));
         }
-    }
-
-    @Test
-    public void testMaxRetries_negative() {
-        Lazy<String> lazy = lazy(-1, throwingSupplier);
-        for (int i = 0; i < 100; i++) {
-            callAndAssertException(lazy);
-        }
-        assertThat(counter.get(), is(1L));
-    }
-
-    @Test
-    public void testMaxRetries_zero() {
-        Lazy<String> lazy = lazy(0, throwingSupplier);
-        for (int i = 0; i < 100; i++) {
-            callAndAssertException(lazy);
-        }
-        assertThat(counter.get(), is(1L));
-    }
-
-    @Test
-    public void testMaxRetries_one() {
-        Lazy<String> lazy = lazy(1, throwingSupplier);
-        for (int i = 0; i < 100; i++) {
-            callAndAssertException(lazy);
-        }
-        assertThat(counter.get(), is(1L));
-    }
-
-    @Test
-    public void testMaxRetries_two() {
-        Lazy<String> lazy = lazy(2, throwingSupplier);
-        for (int i = 0; i < 100; i++) {
-            callAndAssertException(lazy);
-        }
-        assertThat(counter.get(), is(2L));
-    }
-
-    @Test
-    public void testMaxRetries_three() {
-        Lazy<String> lazy = lazy(3, throwingSupplier);
-        for (int i = 0; i < 100; i++) {
-            callAndAssertException(lazy);
-        }
-        assertThat(counter.get(), is(3L));
-    }
-
-    @Test
-    public void testMaxRetries_fourtyTwo() {
-        Lazy<String> lazy = lazy(42, throwingSupplier);
-        for (int i = 0; i < 100; i++) {
-            callAndAssertException(lazy);
-        }
-        assertThat(counter.get(), is(42L));
     }
 
     @Test
     public void testMaxRetries_unlimited() {
-        Lazy<String> lazy = lazy(Integer.MAX_VALUE, throwingSupplier);
+        Lazy<String> lazy = lazy(throwingSupplier);
         for (int i = 0; i < 100; i++) {
             callAndAssertException(lazy);
         }

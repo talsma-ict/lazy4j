@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * Module for a lazy evaluator class.
+ */
 module nl.talsmasoftware.lazy4j {
 
     exports nl.talsmasoftware.lazy4j;
