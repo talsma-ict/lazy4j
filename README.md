@@ -9,14 +9,14 @@ A generic `Lazy` class in java
 
 ## What is it?
 
-A wrapper for a `Supplier` function that evaluates it lazily when it is first needed,
-remembering the result so the wrapped supplier does not get called again.  
-`Lazy` wraps the `Supplier` functional interface.
+A lazy function that is evaluated only when it is first needed,
+remembering the result so it does not get called again.
+
+Technically, `Lazy` is a wrapper for standard Java `Supplier` functions.
 
 ## Why?
 
-This is often recurring functionality that should have been provided out of the box by the JDK
-when lambda's were introduced in Java 8.
+We feel this ought to be provided out of the box and should have been when lambda's were introduced, back in Java 8.
 
 Fortunately, it's not very difficult to create, so that's what we did.
 
@@ -26,12 +26,16 @@ A small example of how this class can be used:
 
 ```java
 public class Example {
-    private final Lazy<Expensive> expensive = Lazy.lazy(Expensive::create);
+    // Method reference to Expensive.create() only when needed and remember the result.
+    private final Lazy<Expensive> lazyMethodReference = Lazy.lazy(Expensive::new);
+
+    // Lambda called only once when needed for the first time.
+    private final Lazy<Expensive> lazyLambda = Lazy.lazy(() -> new Expensive());
 }
 ```
 
-This declares a lazy `expensive` variable without creating an expensive object yet.  
-Only when `get()` is called for the first time, the `Expensive.create()` method is called.  
+This declares a lazy variable without calling the expensive supplier yet.  
+Only when `get()` is called for the first time, the `new Expensive()` constructor is called.  
 All subsequent invocations will return _the same_ instance of `Expensive`.
 
 Lazy provides the following methods:
