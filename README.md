@@ -27,7 +27,7 @@ A small example of how this class can be used:
 ```java
 public class Example {
     // Method reference to Expensive.create() only when needed and remember the result.
-    private final Lazy<Expensive> lazyMethodReference = Lazy.lazy(Expensive::new);
+    private final Lazy<Expensive> lazyMethod = Lazy.lazy(Expensive::new);
 
     // Lambda called only once when needed for the first time.
     private final Lazy<Expensive> lazyLambda = Lazy.lazy(() -> new Expensive());
