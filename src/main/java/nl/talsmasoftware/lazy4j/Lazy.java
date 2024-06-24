@@ -203,7 +203,7 @@ public final class Lazy<T> implements Supplier<T> {
      */
     public <U> Lazy<U> flatMap(Function<? super T, ? extends Supplier<? extends U>> mapper) {
         requireNonNull(mapper, "Mapper function is <null>.");
-        return lazy(() -> requireNonNull(mapper.apply(get()), "Lazy supplier is <null>.").get());
+        return lazy(() -> requireNonNull(mapper.apply(get()), "Lazy mapper returned <null> supplier.").get());
     }
 
     /**
