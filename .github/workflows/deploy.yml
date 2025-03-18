@@ -3,7 +3,7 @@ name: Deploy artifacts
 on:
   workflow_run:
     workflows: [ 'Build and test' ]
-    branches: [ 'develop', 'master', 'main', 'fix-deploy-build' ]
+    branches: [ 'develop', 'master', 'main' ]
 
 jobs:
   build:
