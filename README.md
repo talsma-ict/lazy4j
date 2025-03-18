@@ -1,4 +1,4 @@
-[![CI build][ci-img]][ci]
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=talsma-ict_lazy4j&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=talsma-ict_lazy4j)
 [![Coverage Status][coveralls-img]][coveralls]
 [![Maven Version][maven-img]][maven]
 [![JavaDoc][javadoc-img]][javadoc]
@@ -78,8 +78,6 @@ libraryDependencies += "nl.talsmasoftware" % "lazy4j" % "[see maven-central badg
 [Apache 2.0 license](LICENSE)
 
 
-  [ci-img]: https://github.com/talsma-ict/lazy4j/actions/workflows/ci-build.yml/badge.svg
-  [ci]: https://github.com/talsma-ict/lazy4j/actions/workflows/ci-build.yml
   [maven-img]: <https://img.shields.io/maven-central/v/nl.talsmasoftware/lazy4j>
   [maven]: <http://mvnrepository.com/artifact/nl.talsmasoftware/lazy4j>
   [coveralls-img]: <https://coveralls.io/repos/github/talsma-ict/lazy4j/badge.svg>
