@@ -96,41 +96,6 @@
         </resources>
         <plugins>
             <plugin>
-                <groupId>com.mycila</groupId>
-                <artifactId>license-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <phase>compile</phase>
-                    </execution>
-                </executions>
-                <configuration>
-                    <header>${project.basedir}/.mvn/license/header.txt</header>
-                    <properties>
-                        <owner>${project.organization.name}</owner>
-                    </properties>
-                    <mapping>
-                        <java>SLASHSTAR_STYLE</java>
-                    </mapping>
-                    <excludes>
-                        <exclude>.gitignore</exclude>
-                        <exclude>.github/**</exclude>
-                        <exclude>.mvn/**</exclude>
-                        <exclude>mvnw*</exclude>
-                        <exclude>**/.idea/**</exclude>
-                        <exclude>LICENSE</exclude>
-                        <exclude>**/*.md</exclude>
-                        <exclude>**/*.puml</exclude>
-                        <exclude>**/*.svg</exclude>
-                        <exclude>src/main/resources/**</exclude>
-                        <exclude>src/test/resources/**</exclude>
-                    </excludes>
-                    <strictCheck>true</strictCheck>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <executions>
@@ -486,6 +451,54 @@
                         </executions>
                         <configuration>
                             <repoToken>${env.COVERALLS_REPO_TOKEN}</repoToken>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>license-check</id>
+            <activation>
+                <property>
+                    <name>!skipLicenseCheck</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.mycila</groupId>
+                        <artifactId>license-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <phase>compile</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <header>${project.basedir}/.mvn/license/header.txt</header>
+                            <properties>
+                                <owner>${project.organization.name}</owner>
+                            </properties>
+                            <mapping>
+                                <java>SLASHSTAR_STYLE</java>
+                            </mapping>
+                            <excludes>
+                                <exclude>.gitignore</exclude>
+                                <exclude>.github/**</exclude>
+                                <exclude>.mvn/**</exclude>
+                                <exclude>mvnw*</exclude>
+                                <exclude>**/.idea/**</exclude>
+                                <exclude>LICENSE</exclude>
+                                <exclude>**/*.md</exclude>
+                                <exclude>**/*.puml</exclude>
+                                <exclude>**/*.svg</exclude>
+                                <exclude>src/main/resources/**</exclude>
+                                <exclude>src/test/resources/**</exclude>
+                            </excludes>
+                            <strictCheck>true</strictCheck>
                         </configuration>
                     </plugin>
                 </plugins>
