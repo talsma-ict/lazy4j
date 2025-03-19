@@ -67,10 +67,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-        <sonar.organization>talsma-ict</sonar.organization>
-        <sonar.projectKey>talsma-ict_lazy4j</sonar.projectKey>
-
         <!-- test -->
         <junit.version>5.12.1</junit.version>
         <hamcrest.version>3.0</hamcrest.version>
@@ -217,13 +213,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.eluder.coveralls</groupId>
-                <artifactId>coveralls-maven-plugin</artifactId>
-                <configuration>
-                    <repoToken>${env.COVERALLS_REPO_TOKEN}</repoToken>
-                </configuration>
             </plugin>
         </plugins>
         <pluginManagement>
@@ -412,6 +401,66 @@
                             <publishingServerId>central</publishingServerId>
                             <autoPublish>true</autoPublish>
                             <waitUntil>published</waitUntil>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>sonar</id>
+            <activation>
+                <property>
+                    <name>env.SONAR_TOKEN</name>
+                </property>
+            </activation>
+            <properties>
+                <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+                <sonar.organization>talsma-ict</sonar.organization>
+                <sonar.projectKey>talsma-ict_lazy4j</sonar.projectKey>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonarsource.scanner.maven</groupId>
+                        <artifactId>sonar-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sonar-check</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sonar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>coveralls</id>
+            <activation>
+                <property>
+                    <name>env.COVERALLS_REPO_TOKEN</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.eluder.coveralls</groupId>
+                        <artifactId>coveralls-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>report-coveralls-coverage</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <repoToken>${env.COVERALLS_REPO_TOKEN}</repoToken>
                         </configuration>
                     </plugin>
                 </plugins>
