@@ -74,7 +74,6 @@
         <logback.version>1.5.18</logback.version>
 
         <!-- build -->
-        <coveralls.jaxb-api.version>2.3.1</coveralls.jaxb-api.version>
         <umldoclet.version>2.2.1</umldoclet.version>
     </properties>
 
@@ -263,18 +262,6 @@
                     <version>5.0.0.4389</version>
                 </plugin>
                 <plugin>
-                    <groupId>org.eluder.coveralls</groupId>
-                    <artifactId>coveralls-maven-plugin</artifactId>
-                    <version>4.3.0</version>
-                    <dependencies>
-                        <dependency>
-                            <groupId>javax.xml.bind</groupId>
-                            <artifactId>jaxb-api</artifactId>
-                            <version>${coveralls.jaxb-api.version}</version>
-                        </dependency>
-                    </dependencies>
-                </plugin>
-                <plugin>
                     <groupId>com.mycila</groupId>
                     <artifactId>license-maven-plugin</artifactId>
                     <version>5.0.0</version>
@@ -433,35 +420,6 @@
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>coveralls</id>
-            <activation>
-                <property>
-                    <name>env.COVERALLS_REPO_TOKEN</name>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.eluder.coveralls</groupId>
-                        <artifactId>coveralls-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>report-coveralls-coverage</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>report</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <repoToken>${env.COVERALLS_REPO_TOKEN}</repoToken>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
