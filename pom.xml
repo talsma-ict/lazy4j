@@ -439,10 +439,11 @@
                         <artifactId>license-maven-plugin</artifactId>
                         <executions>
                             <execution>
+                                <id>check-license</id>
+                                <phase>compile</phase>
                                 <goals>
                                     <goal>check</goal>
                                 </goals>
-                                <phase>compile</phase>
                             </execution>
                         </executions>
                         <configuration>
