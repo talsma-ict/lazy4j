@@ -175,19 +175,6 @@
                             </formats>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>report-aggregate</id>
-                        <phase>post-integration-test</phase>
-                        <inherited>false</inherited>
-                        <goals>
-                            <goal>report-aggregate</goal>
-                        </goals>
-                        <configuration>
-                            <formats>
-                                <format>XML</format>
-                            </formats>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
             <plugin>
