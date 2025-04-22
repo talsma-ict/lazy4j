@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 Talsma ICT
+ * Copyright 2018-2025 Talsma ICT
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -252,7 +252,7 @@ public final class Lazy<T> implements Supplier<T> {
      * @see #of(Supplier)
      * @deprecated Factory method was renamed to {@code Lazy.of} in version 2.0.1
      */
-    @Deprecated(forRemoval = true, since = "2.0.1")
+    @Deprecated // java 8 doesn't yet support: (forRemoval = true, since = "2.0.1")
     public static <T> Lazy<T> lazy(Supplier<T> supplier) {
         return Lazy.of(supplier);
     }
