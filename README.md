@@ -1,7 +1,7 @@
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=talsma-ict_lazy4j&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=talsma-ict_lazy4j)
-[![Coverage Status][coveralls-img]][coveralls]
 [![Maven Version][maven-img]][maven]
 [![JavaDoc][javadoc-img]][javadoc]
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=talsma-ict_lazy4j&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=talsma-ict_lazy4j)
+[![Coverage Status][coveralls-img]][coveralls]
 
 # Lazy4J
 
