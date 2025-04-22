@@ -41,8 +41,8 @@ import static java.util.Objects.requireNonNull;
  * @param <T> The type that is lazily evaluated.
  * @author Sjoerd Talsma
  */
+@SuppressWarnings("java:S3077") // We use reference-based thread safety, so volatile actually is what we want.
 public final class Lazy<T> implements Supplier<T> {
-
     private volatile Supplier<T> supplier;
     private volatile T result;
 
@@ -252,7 +252,8 @@ public final class Lazy<T> implements Supplier<T> {
      * @see #of(Supplier)
      * @deprecated Factory method was renamed to {@code Lazy.of} in version 2.0.1
      */
-    @Deprecated // java 8 doesn't yet support: (forRemoval = true, since = "2.0.1")
+    @SuppressWarnings("java:S6355") // Java 8 does not yet support the additional arguments to Deprecated annotation.
+    @Deprecated // (forRemoval = true, since = "2.0.1")
     public static <T> Lazy<T> lazy(Supplier<T> supplier) {
         return Lazy.of(supplier);
     }

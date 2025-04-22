@@ -32,12 +32,12 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class LazyTest {
-    private AtomicInteger counter;
-    private Lazy<String> mayonaise, exception;
+class LazyTest {
+    AtomicInteger counter;
+    Lazy<String> mayonaise, exception;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         counter = new AtomicInteger(0);
         mayonaise = Lazy.of(counting(() -> "I've seen them do it man, they f*n drown them in that shit!"));
         exception = Lazy.of(counting(() -> {
@@ -53,7 +53,7 @@ public class LazyTest {
      *
      * @param lazy The lazy object to be resolved.
      */
-    private static <T> Optional<T> resolve(Lazy<T> lazy) {
+    static <T> Optional<T> resolve(Lazy<T> lazy) {
         try {
             return Optional.ofNullable(lazy.get());
         } catch (RuntimeException expected) {
@@ -65,7 +65,7 @@ public class LazyTest {
      * Assert that we get a decent exception message for a {@code null} supplier.
      */
     @Test
-    public void testLazyNull() {
+    void testLazyNull() {
         try {
             Lazy.of(null);
             fail("Exception expected");
@@ -75,7 +75,7 @@ public class LazyTest {
     }
 
     @Test
-    public void testLazy() {
+    void testLazy() {
         assertThat(counter.get(), is(0));
         for (int i = 0; i < 100; i++) {
             assertThat(mayonaise.get(), equalTo("I've seen them do it man, they f*n drown them in that shit!"));
@@ -87,7 +87,7 @@ public class LazyTest {
      * Test that even when the result is {@code null}, the supplier gets called only once.
      */
     @Test
-    public void testLazyNullValue() {
+    void testLazyNullValue() {
         final Lazy<String> nothing = Lazy.of(counting(() -> null));
         assertThat(counter.get(), is(0));
 
@@ -99,7 +99,7 @@ public class LazyTest {
      * Test when the result is an exception, the supplier gets called again to retry obtaining a lazy value.
      */
     @Test
-    public void testLazyException() {
+    void testLazyException() {
         for (int i = 0; i < 100; i++)
             try {
                 exception.get();
@@ -112,7 +112,7 @@ public class LazyTest {
     }
 
     @Test
-    public void testIsAvailable() {
+    void testIsAvailable() {
         assertThat(mayonaise.isAvailable(), is(false));
         assertThat(counter.get(), is(0));
         resolve(mayonaise);
@@ -122,7 +122,7 @@ public class LazyTest {
     }
 
     @Test
-    public void testIsAvailable_exception() {
+    void testIsAvailable_exception() {
         assertThat(exception.isAvailable(), is(false));
         assertThat(counter.get(), is(0));
         resolve(exception);
@@ -132,7 +132,7 @@ public class LazyTest {
     }
 
     @Test
-    public void testGetIfAvailable() {
+    void testGetIfAvailable() {
         assertThat(mayonaise.getIfAvailable(), is(Optional.empty()));
         assertThat(counter.get(), is(0));
         resolve(mayonaise);
@@ -142,7 +142,7 @@ public class LazyTest {
     }
 
     @Test
-    public void testIfAvailable() {
+    void testIfAvailable() {
         AtomicInteger availableCounter = new AtomicInteger(0);
         mayonaise.ifAvailable(value -> availableCounter.incrementAndGet());
         assertThat(counter.get(), is(0));
@@ -159,7 +159,7 @@ public class LazyTest {
     }
 
     @Test
-    public void testIfAvailable_exception() {
+    void testIfAvailable_exception() {
         AtomicInteger availableCounter = new AtomicInteger(0);
         exception.ifAvailable(value -> availableCounter.incrementAndGet());
         assertThat(counter.get(), is(0));
@@ -173,7 +173,7 @@ public class LazyTest {
     }
 
     @Test
-    public void testMap() {
+    void testMap() {
         AtomicInteger mapCounter = new AtomicInteger(0);
         Lazy<String> reverse = mayonaise.map(counting(mapCounter, s -> new StringBuffer(s).reverse().toString()));
         assertThat(counter.get(), is(0));
@@ -187,7 +187,7 @@ public class LazyTest {
     }
 
     @Test
-    public void testFlatMap() {
+    void testFlatMap() {
         AtomicInteger mapCounter = new AtomicInteger(0);
         AtomicInteger flatteningCounter = new AtomicInteger(0);
         Lazy<String> reverse = mayonaise.flatMap(counting(mapCounter,
@@ -205,33 +205,33 @@ public class LazyTest {
     }
 
     @Test
-    public void testToString_unresolved() {
+    void testToString_unresolved() {
         assertThat(mayonaise, hasToString(equalTo("Lazy[not yet resolved]")));
         assertThat(counter.get(), is(0));
     }
 
     @Test
-    public void testToString_unresolved_exception() {
+    void testToString_unresolved_exception() {
         assertThat(exception, hasToString(equalTo("Lazy[not yet resolved]")));
         assertThat(counter.get(), is(0));
     }
 
     @Test
-    public void testToString_resolved() {
+    void testToString_resolved() {
         resolve(mayonaise);
         assertThat(mayonaise, hasToString(equalTo("Lazy[I've seen them do it man, they f*n drown them in that shit!]")));
         assertThat(counter.get(), is(1));
     }
 
     @Test
-    public void testToString_resolved_null() {
+    void testToString_resolved_null() {
         Lazy<Object> lazyNull = Lazy.of(() -> null);
         assertThat(lazyNull.get(), is(nullValue()));
         assertThat(lazyNull, hasToString(equalTo("Lazy[null]")));
     }
 
     @Test
-    public void testToString_unresolved_due_to_exception() {
+    void testToString_unresolved_due_to_exception() {
         resolve(exception);
         assertThat(exception, hasToString(equalTo("Lazy[not yet resolved]")));
         assertThat(counter.get(), is(1));
@@ -239,7 +239,7 @@ public class LazyTest {
 
     @Test
     @SuppressWarnings("deprecation") // We test the deprecated method
-    public void testDeprecatedFactoryMethod() {
+    void testDeprecatedFactoryMethod() {
         Lazy<String> lazyString = Lazy.lazy(mayonaise);
         assertThat(lazyString.isAvailable(), is(false));
         assertThat(mayonaise.isAvailable(), is(false));
@@ -252,18 +252,18 @@ public class LazyTest {
         assertThat(counter.get(), is(1));
     }
 
-    private <T> Supplier<T> counting(Supplier<T> supplier) {
+    <T> Supplier<T> counting(Supplier<T> supplier) {
         return counting(counter, supplier);
     }
 
-    private static <T> Supplier<T> counting(AtomicInteger counter, Supplier<T> supplier) {
+    static <T> Supplier<T> counting(AtomicInteger counter, Supplier<T> supplier) {
         return () -> {
             counter.incrementAndGet();
             return supplier.get();
         };
     }
 
-    private static <T, U> Function<T, U> counting(AtomicInteger counter, Function<T, U> function) {
+    static <T, U> Function<T, U> counting(AtomicInteger counter, Function<T, U> function) {
         return input -> {
             counter.incrementAndGet();
             return function.apply(input);

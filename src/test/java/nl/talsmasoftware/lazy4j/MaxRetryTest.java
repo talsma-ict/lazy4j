@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Talsma ICT
+ * Copyright 2018-2025 Talsma ICT
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,19 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
-import static nl.talsmasoftware.lazy4j.Lazy.lazy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class MaxRetryTest {
-    private static final AtomicLong counter = new AtomicLong(0L);
-    private static final Supplier<String> throwingSupplier = () -> {
+class MaxRetryTest {
+    static final AtomicLong counter = new AtomicLong(0L);
+    static final Supplier<String> throwingSupplier = () -> {
         counter.incrementAndGet();
         throw new IllegalStateException("Whoops!");
     };
 
     @BeforeEach
-    public void resetCounter() {
+    void resetCounter() {
         counter.set(0L);
     }
 
@@ -43,7 +42,7 @@ public class MaxRetryTest {
      *
      * @param lazy The lazy value to call
      */
-    private static void callAndAssertException(Lazy<String> lazy) {
+    static void callAndAssertException(Lazy<String> lazy) {
         try {
             lazy.get();
             fail("LazyEvaluationException expected");
@@ -53,8 +52,8 @@ public class MaxRetryTest {
     }
 
     @Test
-    public void testMaxRetries_unlimited() {
-        Lazy<String> lazy = lazy(throwingSupplier);
+    void testMaxRetries_unlimited() {
+        Lazy<String> lazy = Lazy.of(throwingSupplier);
         for (int i = 0; i < 100; i++) {
             callAndAssertException(lazy);
         }

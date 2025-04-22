@@ -29,16 +29,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.fail;
 
-/**
- * @author Sjoerd Talsma
- */
-public class LazyConcurrencyTest {
+class LazyConcurrencyTest {
 
-    private AtomicInteger counter;
-    private Lazy<String> chopper;
+    AtomicInteger counter;
+    Lazy<String> chopper;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         counter = new AtomicInteger(0);
         chopper = Lazy.of(() -> {
             counter.incrementAndGet();
@@ -54,7 +51,7 @@ public class LazyConcurrencyTest {
      * @throws InterruptedException if the threadpool doesn't shutdown within a minute.
      */
     @Test
-    public void testConcurrentGets() throws InterruptedException {
+    void testConcurrentGets() throws InterruptedException {
         final int threads = 10;
         final int processes = 100;
         final int gets = 1000;
