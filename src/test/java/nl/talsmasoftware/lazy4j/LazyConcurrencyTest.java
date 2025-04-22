@@ -40,7 +40,7 @@ public class LazyConcurrencyTest {
     @BeforeEach
     public void setup() {
         counter = new AtomicInteger(0);
-        chopper = Lazy.lazy(() -> {
+        chopper = Lazy.of(() -> {
             counter.incrementAndGet();
             return "Whose motorcycle is this? It's a chopper baby. " +
                     "Whose chopper is this? Zed's. " +

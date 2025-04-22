@@ -50,17 +50,20 @@ public final class Lazy<T> implements Supplier<T> {
      * Create a {@linkplain Lazy} object that calls the specified {@code supplier}
      * only when the lazy value is needed for the first time.
      * From the first successful(*) call, the result is re-used by the lazy instance.
+     *
      * <p>
      * {@code Lazy} objects are thread-safe.
+     *
      * <p>
-     * (*) If the supplier throws an exception, the function call will be tried again
-     * on the next invocation, until no exception is thrown.
+     * (*) If the supplier throws an exception, the function call will be tried again on the next invocation,
+     * until no exception is thrown.
      *
      * @param supplier The value supplier for the lazy placeholder
      * @param <T>      The type of the lazy value
      * @return A lazy placeholder for the supplier result that will only obtain it when needed.
+     * @since 2.0.1
      */
-    public static <T> Lazy<T> lazy(Supplier<T> supplier) {
+    public static <T> Lazy<T> of(Supplier<T> supplier) {
         return new Lazy<>(supplier);
     }
 
@@ -91,6 +94,7 @@ public final class Lazy<T> implements Supplier<T> {
 
     /**
      * Returns the value from this lazy object, eagerly evaluating it if necessary.
+     *
      * <p>
      * This method is thread-safe, so no {@code Lazy} instance is evaluated more than once.
      *
@@ -104,6 +108,7 @@ public final class Lazy<T> implements Supplier<T> {
 
     /**
      * Returns whether the lazy value was already evaluated and did not throw an exception.
+     *
      * <p>
      * This method can be used for conditional use of lazy values in cases where forced evaluation is not required.
      *
@@ -118,9 +123,11 @@ public final class Lazy<T> implements Supplier<T> {
      * Returns an optional reference to the value if it is already available,
      * and will <b>not</b> eagerly evaluate the value otherwise,
      * but just return {@linkplain Optional#empty()} instead.
+     *
      * <p>
      * The result of this method depends on the state of this lazy value
      * but does not influence it.
+     *
      * <p>
      * <b>Please note:</b> <em>This method cannot be used to determine whether or
      * not the lazy value has already been evaluated.
@@ -141,9 +148,11 @@ public final class Lazy<T> implements Supplier<T> {
      * Provides the lazy value to the consumer
      * <em>if it is already {@linkplain #isAvailable() available}</em>
      * and will <b>not</b> eagerly evaluate the value to call the consumer.
+     *
      * <p>
      * The consumer will not be called if the lazy value was not already evaluated
      * or threw an exception.
+     *
      * <p>
      * <b>Please note:</b> <em>There is a difference between this method
      * and calling {@code getIfAvailable().ifPresent(consumer)}. If the lazy value
@@ -163,10 +172,12 @@ public final class Lazy<T> implements Supplier<T> {
     /**
      * Returns a {@code Lazy} object with the result of applying the given mapping function
      * to this lazy value.
+     *
      * <p>
      * Regardless whether {@code this} lazy object was already evaluated or not,
      * the mapping function will only be called when (and if) the returned {@code Lazy}
      * object's {@linkplain #get()} method is called.
+     *
      * <p>
      * Evaluating the returned {@code Lazy} object will also trigger eager evaluation
      * of {@code this} object.
@@ -179,16 +190,18 @@ public final class Lazy<T> implements Supplier<T> {
      */
     public <U> Lazy<U> map(Function<? super T, ? extends U> mapper) {
         requireNonNull(mapper, "Mapper function is <null>.");
-        return lazy(() -> mapper.apply(get()));
+        return Lazy.of(() -> mapper.apply(get()));
     }
 
     /**
      * Returns a {@code Lazy} object with the result of applying the given mapping function
      * to this lazy value.
+     *
      * <p>
      * Regardless whether {@code this} lazy object was already evaluated or not,
      * the mapping function will only be called when (and if) the returned {@code Lazy}
      * object's {@linkplain #get()} method is called.
+     *
      * <p>
      * The resulting {@code Supplier} from the mapping function is
      * eagerly evaluated (a most once) precisely when the resulting
@@ -203,7 +216,7 @@ public final class Lazy<T> implements Supplier<T> {
      */
     public <U> Lazy<U> flatMap(Function<? super T, ? extends Supplier<? extends U>> mapper) {
         requireNonNull(mapper, "Mapper function is <null>.");
-        return lazy(() -> requireNonNull(mapper.apply(get()), "Lazy mapper returned <null> supplier.").get());
+        return Lazy.of(() -> requireNonNull(mapper.apply(get()), "Lazy mapper returned <null> supplier.").get());
     }
 
     /**
@@ -221,4 +234,26 @@ public final class Lazy<T> implements Supplier<T> {
         return getClass().getSimpleName() + (isAvailable() ? "[" + get() + ']' : "[not yet resolved]");
     }
 
+    /**
+     * Create a {@linkplain Lazy} object that calls the specified {@code supplier}
+     * only when the lazy value is needed for the first time.
+     * From the first successful(*) call, the result is re-used by the lazy instance.
+     *
+     * <p>
+     * {@code Lazy} objects are thread-safe.
+     *
+     * <p>
+     * (*) If the supplier throws an exception, the function call will be tried again on the next invocation,
+     * until no exception is thrown.
+     *
+     * @param supplier The value supplier for the lazy placeholder
+     * @param <T>      The type of the lazy value
+     * @return A lazy placeholder for the supplier result that will only obtain it when needed.
+     * @see #of(Supplier)
+     * @deprecated Factory method was renamed to {@code Lazy.of} in version 2.0.1
+     */
+    @Deprecated(forRemoval = true, since = "2.0.1")
+    public static <T> Lazy<T> lazy(Supplier<T> supplier) {
+        return Lazy.of(supplier);
+    }
 }

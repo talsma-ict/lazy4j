@@ -39,14 +39,15 @@ public class LazyTest {
     @BeforeEach
     public void setUp() {
         counter = new AtomicInteger(0);
-        mayonaise = Lazy.lazy(counting(() -> "I've seen them do it man, they f*n drown them in that shit!"));
-        exception = Lazy.lazy(counting(() -> {
+        mayonaise = Lazy.of(counting(() -> "I've seen them do it man, they f*n drown them in that shit!"));
+        exception = Lazy.of(counting(() -> {
             throw new IllegalStateException("Whoops!");
         }));
     }
 
     /**
      * Resolve the lazy object, swallowing any potential LazyEvaluationExceptions.
+     *
      * <p>
      * Note that no distinction can be made from lazy null values and lazy exceptions.
      *
@@ -66,7 +67,7 @@ public class LazyTest {
     @Test
     public void testLazyNull() {
         try {
-            Lazy.lazy(null);
+            Lazy.of(null);
             fail("Exception expected");
         } catch (NullPointerException expected) {
             assertThat(expected, hasToString(containsString("Lazy function is <null>")));
@@ -87,7 +88,7 @@ public class LazyTest {
      */
     @Test
     public void testLazyNullValue() {
-        final Lazy<String> nothing = Lazy.lazy(counting(() -> null));
+        final Lazy<String> nothing = Lazy.of(counting(() -> null));
         assertThat(counter.get(), is(0));
 
         for (int i = 0; i < 100; i++) assertThat(nothing.get(), is(nullValue()));
@@ -95,7 +96,7 @@ public class LazyTest {
     }
 
     /**
-     * Test that even when the result is an exception, the supplier gets called only once.
+     * Test when the result is an exception, the supplier gets called again to retry obtaining a lazy value.
      */
     @Test
     public void testLazyException() {
@@ -190,7 +191,7 @@ public class LazyTest {
         AtomicInteger mapCounter = new AtomicInteger(0);
         AtomicInteger flatteningCounter = new AtomicInteger(0);
         Lazy<String> reverse = mayonaise.flatMap(counting(mapCounter,
-                s -> Lazy.lazy(counting(flatteningCounter, (Supplier<String>) s::toUpperCase))));
+                s -> Lazy.of(counting(flatteningCounter, (Supplier<String>) s::toUpperCase))));
         assertThat(counter.get(), is(0));
         assertThat(mapCounter.get(), is(0));
         assertThat(flatteningCounter.get(), is(0));
@@ -224,7 +225,7 @@ public class LazyTest {
 
     @Test
     public void testToString_resolved_null() {
-        Lazy<Object> lazyNull = Lazy.lazy(() -> null);
+        Lazy<Object> lazyNull = Lazy.of(() -> null);
         assertThat(lazyNull.get(), is(nullValue()));
         assertThat(lazyNull, hasToString(equalTo("Lazy[null]")));
     }
@@ -233,6 +234,21 @@ public class LazyTest {
     public void testToString_unresolved_due_to_exception() {
         resolve(exception);
         assertThat(exception, hasToString(equalTo("Lazy[not yet resolved]")));
+        assertThat(counter.get(), is(1));
+    }
+
+    @Test
+    @SuppressWarnings("deprecation") // We test the deprecated method
+    public void testDeprecatedFactoryMethod() {
+        Lazy<String> lazyString = Lazy.lazy(mayonaise);
+        assertThat(lazyString.isAvailable(), is(false));
+        assertThat(mayonaise.isAvailable(), is(false));
+
+        assertThat(lazyString.get(), is("I've seen them do it man, they f*n drown them in that shit!"));
+        assertThat(lazyString.get(), is("I've seen them do it man, they f*n drown them in that shit!"));
+
+        assertThat(lazyString.isAvailable(), is(true));
+        assertThat(mayonaise.isAvailable(), is(true));
         assertThat(counter.get(), is(1));
     }
 
