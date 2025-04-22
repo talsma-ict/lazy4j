@@ -26,11 +26,11 @@ A small example of how this class can be used:
 
 ```java
 public class Example {
-    // Method reference to Expensive.create() only when needed and remember the result.
-    private final Lazy<Expensive> lazyMethod = Lazy.lazy(Expensive::new);
+    // Method reference to constructor new Expensive(), called only when needed and keep the result.
+    private final Lazy<Expensive> lazyMethod = Lazy.of(Expensive::new);
 
     // Lambda called only once when needed for the first time.
-    private final Lazy<Expensive> lazyLambda = Lazy.lazy(() -> new Expensive());
+    private final Lazy<Expensive> lazyLambda = Lazy.of(() -> new Expensive());
 }
 ```
 
