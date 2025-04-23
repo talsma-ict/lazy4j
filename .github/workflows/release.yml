@@ -74,4 +74,4 @@ jobs:
       - name: Create post-release merge request
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: gh pr create -B main -H ${BRANCH} --title "Merge release ${VERSION} to main branch" --body 'Created by Github action'
+        run: gh pr create --head ${BRANCH} --title "Merge release ${VERSION} to main branch" --body 'Created by Github action'
