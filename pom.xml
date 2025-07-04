@@ -74,7 +74,7 @@
         <logback.version>1.5.18</logback.version>
 
         <!-- build -->
-        <umldoclet.version>2.2.1</umldoclet.version>
+        <umldoclet.version>2.2.2</umldoclet.version>
     </properties>
 
     <build>
