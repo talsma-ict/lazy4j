@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -30,11 +31,12 @@ import static org.hamcrest.Matchers.hasToString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class LazyTest {
     AtomicInteger counter;
-    Lazy<String> mayonaise, exception;
+    Lazy<String> mayonaise, exception, eager;
 
     @BeforeEach
     void setUp() {
@@ -43,6 +45,7 @@ class LazyTest {
         exception = Lazy.of(counting(() -> {
             throw new IllegalStateException("Whoops!");
         }));
+        eager = Lazy.eager("I'm eager!");
     }
 
     /**
@@ -83,6 +86,20 @@ class LazyTest {
         assertThat(counter.get(), is(1));
     }
 
+    @Test
+    void testEager() {
+        final String value = "The quick brown fox jumps over the lazy dog";
+        Lazy<String> subject = Lazy.eager(value);
+        assertThat(subject.isAvailable(), is(true));
+        assertThat(subject.getIfAvailable(), is(Optional.of(value)));
+
+        AtomicBoolean called = new AtomicBoolean(false);
+        subject.ifAvailable(v -> called.set(true));
+        assertThat("Callback to ifAvailable called?", called.get(), is(true));
+
+        assertThat(subject.get(), is(value));
+    }
+
     /**
      * Test that even when the result is {@code null}, the supplier gets called only once.
      */
@@ -95,8 +112,15 @@ class LazyTest {
         assertThat(counter.get(), is(1));
     }
 
+    @Test
+    void lazyOfLazy() {
+        assertThat(Lazy.of(mayonaise), sameInstance(mayonaise));
+        assertThat(Lazy.of(exception), sameInstance(exception));
+        assertThat(Lazy.of(eager), sameInstance(eager));
+    }
+
     /**
-     * Test when the result is an exception, the supplier gets called again to retry obtaining a lazy value.
+     * Test when the result is an exception, the supplier gets called again to retry getting a lazy value.
      */
     @Test
     void testLazyException() {
@@ -238,7 +262,8 @@ class LazyTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation") // We test the deprecated method
+    @SuppressWarnings("deprecation")
+        // We test the deprecated method
     void testDeprecatedFactoryMethod() {
         Lazy<String> lazyString = Lazy.lazy(mayonaise);
         assertThat(lazyString.isAvailable(), is(false));

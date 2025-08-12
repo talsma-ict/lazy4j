@@ -24,16 +24,20 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * A generic `Lazy` class in java.
+ *
  * <p>
  * The {@link #lazy(Supplier) lazy} factory method takes a {@linkplain Supplier} for a value
  * and wraps it so that it gets called <em>only when first-needed</em>.<br>
  * Results are <em>cached</em>.
+ *
  * <p>
  * A {@code Lazy} value can be {@linkplain #map(Function) mapped} or
  * {@linkplain #flatMap(Function) flat mapped} into another {@code Lazy} value.
+ *
  * <p>
  * {@code Lazy} objects are thread-safe. For every {@link Lazy} instance,
  * the supplier gets called either <em>never</em> or <em>once</em>.
+ *
  * <p>
  * There is one exception to this rule; if a RuntimeException is thrown
  * the value is re-evaluated until the result is obtained without an exception.
@@ -64,22 +68,43 @@ public final class Lazy<T> implements Supplier<T> {
      * @since 2.0.1
      */
     public static <T> Lazy<T> of(Supplier<T> supplier) {
-        return new Lazy<>(supplier);
+        requireNonNull(supplier, "Lazy function is <null>.");
+        return supplier instanceof Lazy ? (Lazy<T>) supplier : new Lazy<>(supplier, null);
+    }
+
+    /**
+     * Return an already-evaluated lazy object.
+     *
+     * <p>
+     * This object is not really lazy, but it can be used in places where a lazy object is needed.<br>
+     * {@link #isAvailable()} will always return {@code true} for the returned object.
+     *
+     * @param value The value to be returned as a lazy object.
+     * @param <T>   The type of the value.
+     * @return The already-evaluated lazy object always returning the same value.
+     * @see #isAvailable()
+     * @since 2.0.2
+     */
+    public static <T> Lazy<T> eager(T value) {
+        return new Lazy<>(null, value);
     }
 
     /**
      * Constructor for unevaluated lazy object.
      *
-     * @param supplier The supplier (required)
+     * @param supplier The supplier.
+     * @param result   The result.
      */
-    private Lazy(Supplier<T> supplier) {
-        this.supplier = requireNonNull(supplier, "Lazy function is <null>.");
+    private Lazy(Supplier<T> supplier, T result) {
+        this.supplier = supplier;
+        this.result = result;
     }
 
     /**
      * Eagerly evaluates the lazy supplier (at most once)
+     *
      * <p>
-     * Please note: this uses double-checked locking which is safe in modern JVMs
+     * This uses double-checked locking which is safe in modern JVMs
      */
     private void forceEagerEvaluation() {
         if (supplier != null) {
@@ -179,8 +204,8 @@ public final class Lazy<T> implements Supplier<T> {
      * object's {@linkplain #get()} method is called.
      *
      * <p>
-     * Evaluating the returned {@code Lazy} object will also trigger eager evaluation
-     * of {@code this} object.
+     * Evaluating the returned {@code Lazy} object will also trigger evaluation
+     * of {@code this} object, if necessary.
      *
      * @param <U>    The type of the value returned from the mapping function
      * @param mapper the mapping function to lazily apply to this value
