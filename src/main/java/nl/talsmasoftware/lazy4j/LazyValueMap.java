@@ -5,23 +5,80 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static java.util.Objects.requireNonNull;
 import static nl.talsmasoftware.lazy4j.LazyUtils.getIfAvailableElseNull;
 import static nl.talsmasoftware.lazy4j.LazyUtils.getNullSafe;
 
+/**
+ * A map that can store its values in a {@link Lazy} manner.
+ *
+ * <p>
+ * This has the advantage that while providing 'standard' {@link Map} features,
+ * unused values do not need to be evaluated.
+ *
+ * <p>
+ * The behaviour of this map depends on the delegate map it was {@link #LazyValueMap(Supplier) initialized} with.
+ * If the delegate map is mutable, the lazy map will be mutable as well.
+ * If the delegate map is sorted, the lazy map will be sorted as well.
+ * The {@link #LazyValueMap() default} and {@link #LazyValueMap(Map) copy} constructors create a lazy map
+ * that behaves like a {@link LinkedHashMap}.
+ *
+ * @param <K> The type of the keys in the map.
+ * @param <V> The type of the values in the map.
+ * @author Sjoerd Talsma
+ * @see Lazy
+ * @since 2.0.2
+ */
 public class LazyValueMap<K, V> extends AbstractMap<K, V> {
+    /**
+     * The delegate map containing the lazy values.
+     */
     private final Map<K, Lazy<V>> delegate;
 
+    /**
+     * Creates a new empty {@code LazyValueMap}, behaving like a {@link LinkedHashMap}.
+     *
+     * @see #LazyValueMap(Supplier)
+     */
     public LazyValueMap() {
         this(LinkedHashMap::new);
     }
 
+    /**
+     * Creates a new {@code LazyValueMap} with the same contents as the specified map.
+     *
+     * <p>
+     * The new map behaves like a {@link LinkedHashMap}.
+     *
+     * @param toCopy The map to copy the contents from.
+     * @see #LazyValueMap(Supplier)
+     */
     public LazyValueMap(Map<K, V> toCopy) {
         this();
         putAll(toCopy);
     }
 
+    /**
+     * Creates a new {@code LazyValueMap} backed by a map created by the specified map factory.
+     *
+     * <p>
+     * This offers full control over the backing map implementation.
+     * For instance:
+     * <pre>{@code
+     * Map<K, V> lazyHashMap = new LazyValueMap<>(HashMap::new);
+     * Map<K, V> lazyLinkedHashMap = new LazyValueMap<>(LinkedHashMap::new);
+     * Map<K, V> lazyTreeMap = new LazyValueMap<>(TreeMap::new);
+     * }</pre>
+     *
+     * <p>
+     * Technically, the mapFactory does not <em>need</em> to create a new map,
+     * but please be aware that sharing the delegate map may cause unexpected behaviour,
+     * especially if it is accessed concurrently.
+     *
+     * @param mapFactory The map factory to provide the backing map (required, must provide a non-{@code null} map).
+     */
     public LazyValueMap(Supplier<Map<K, Lazy<V>>> mapFactory) {
-        this.delegate = mapFactory.get();
+        this.delegate = requireNonNull(mapFactory.get(), "Backing map may not be <null>.");
     }
 
     @Override
