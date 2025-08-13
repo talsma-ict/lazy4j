@@ -243,7 +243,7 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
         @Override
         public Iterator<Entry<K, V>> iterator() {
             final Iterator<Entry<K, Lazy<V>>> iterator = delegateEntrySet.iterator();
-            return new Iterator<>() {
+            return new Iterator<Entry<K, V>>() {
                 @Override
                 public boolean hasNext() {
                     return iterator.hasNext();
