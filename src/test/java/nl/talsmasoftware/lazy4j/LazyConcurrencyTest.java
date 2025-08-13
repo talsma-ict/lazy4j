@@ -25,8 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class LazyConcurrencyTest {
@@ -56,7 +55,7 @@ class LazyConcurrencyTest {
         final int processes = 100;
         final int gets = 1000;
         ExecutorService threadpool = Executors.newFixedThreadPool(threads);
-        assertThat(counter.get(), is(0));
+        assertThat(counter.get()).isZero();
 
         final CountDownLatch latch = new CountDownLatch(1);
         final Runnable runnable = () -> {
@@ -71,13 +70,17 @@ class LazyConcurrencyTest {
             }
         };
 
-        for (int proc = 0; proc < processes; proc++) threadpool.submit(runnable);
+        for (int proc = 0; proc < processes; proc++) {
+            threadpool.submit(runnable);
+        }
         Thread.sleep(SECONDS.toMillis(1));
         latch.countDown();
         threadpool.shutdown();
-        if (!threadpool.awaitTermination(1, TimeUnit.MINUTES)) fail("Test timed out.");
+        if (!threadpool.awaitTermination(1, TimeUnit.MINUTES)) {
+            fail("Test timed out.");
+        }
 
-        assertThat(counter.get(), is(1));
+        assertThat(counter.get()).isOne();
     }
 
 }
