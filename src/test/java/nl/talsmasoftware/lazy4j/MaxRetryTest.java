@@ -21,9 +21,8 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MaxRetryTest {
     static final AtomicLong counter = new AtomicLong(0L);
@@ -37,26 +36,14 @@ class MaxRetryTest {
         counter.set(0L);
     }
 
-    /**
-     * Calls and asserts the thrown exception.
-     *
-     * @param lazy The lazy value to call
-     */
-    static void callAndAssertException(Lazy<String> lazy) {
-        try {
-            lazy.get();
-            fail("LazyEvaluationException expected");
-        } catch (RuntimeException expected) {
-            assertThat(expected.getMessage(), is("Whoops!"));
-        }
-    }
-
     @Test
     void testMaxRetries_unlimited() {
         Lazy<String> lazy = Lazy.of(throwingSupplier);
         for (int i = 0; i < 100; i++) {
-            callAndAssertException(lazy);
+            assertThatThrownBy(lazy::get)
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessage("Whoops!");
         }
-        assertThat(counter.get(), is(100L));
+        assertThat(counter.get()).isEqualTo(100);
     }
 }
