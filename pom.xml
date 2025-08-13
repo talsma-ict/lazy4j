@@ -69,7 +69,7 @@
 
         <!-- test -->
         <junit.version>5.13.4</junit.version>
-        <hamcrest.version>3.0</hamcrest.version>
+        <assertj.version>3.27.4</assertj.version>
         <slf4j.version>2.0.17</slf4j.version>
         <logback.version>1.5.18</logback.version>
 
@@ -273,9 +273,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest</artifactId>
-            <version>${hamcrest.version}</version>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

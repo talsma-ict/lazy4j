@@ -24,15 +24,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasToString;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LazyTest {
     AtomicInteger counter;
@@ -69,35 +62,32 @@ class LazyTest {
      */
     @Test
     void testLazyNull() {
-        try {
-            Lazy.of(null);
-            fail("Exception expected");
-        } catch (NullPointerException expected) {
-            assertThat(expected, hasToString(containsString("Lazy function is <null>")));
-        }
+        assertThatThrownBy(() -> Lazy.of(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("Lazy function is <null>");
     }
 
     @Test
     void testLazy() {
-        assertThat(counter.get(), is(0));
+        assertThat(counter.get()).isZero();
         for (int i = 0; i < 100; i++) {
-            assertThat(mayonaise.get(), equalTo("I've seen them do it man, they f*n drown them in that shit!"));
+            assertThat(mayonaise.get()).isEqualTo("I've seen them do it man, they f*n drown them in that shit!");
         }
-        assertThat(counter.get(), is(1));
+        assertThat(counter.get()).isOne();
     }
 
     @Test
     void testEager() {
         final String value = "The quick brown fox jumps over the lazy dog";
         Lazy<String> subject = Lazy.eager(value);
-        assertThat(subject.isAvailable(), is(true));
-        assertThat(subject.getIfAvailable(), is(Optional.of(value)));
+        assertThat(subject.isAvailable()).isTrue();
+        assertThat(subject.getIfAvailable()).contains(value);
 
         AtomicBoolean called = new AtomicBoolean(false);
         subject.ifAvailable(v -> called.set(true));
-        assertThat("Callback to ifAvailable called?", called.get(), is(true));
+        assertThat(called.get()).as("Callback to ifAvailable called?").isTrue();
 
-        assertThat(subject.get(), is(value));
+        assertThat(subject.get()).isEqualTo(value);
     }
 
     /**
@@ -106,17 +96,19 @@ class LazyTest {
     @Test
     void testLazyNullValue() {
         final Lazy<String> nothing = Lazy.of(counting(() -> null));
-        assertThat(counter.get(), is(0));
+        assertThat(counter.get()).isZero();
 
-        for (int i = 0; i < 100; i++) assertThat(nothing.get(), is(nullValue()));
-        assertThat(counter.get(), is(1));
+        for (int i = 0; i < 100; i++) {
+            assertThat(nothing.get()).isNull();
+        }
+        assertThat(counter.get()).isOne();
     }
 
     @Test
     void lazyOfLazy() {
-        assertThat(Lazy.of(mayonaise), sameInstance(mayonaise));
-        assertThat(Lazy.of(exception), sameInstance(exception));
-        assertThat(Lazy.of(eager), sameInstance(eager));
+        assertThat(Lazy.of(mayonaise)).isSameAs(mayonaise);
+        assertThat(Lazy.of(exception)).isSameAs(exception);
+        assertThat(Lazy.of(eager)).isSameAs(eager);
     }
 
     /**
@@ -124,90 +116,91 @@ class LazyTest {
      */
     @Test
     void testLazyException() {
-        for (int i = 0; i < 100; i++)
-            try {
-                exception.get();
-                fail("Exception expected");
-            } catch (RuntimeException expected) {
-                assertThat(expected, is(instanceOf(IllegalStateException.class)));
-                assertThat(expected.getMessage(), equalTo("Whoops!"));
-            }
-        assertThat(counter.get(), is(100));
+        for (int i = 0; i < 100; i++) {
+            assertThatThrownBy(exception::get)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Whoops!");
+        }
+        assertThat(counter.get()).isEqualTo(100);
     }
 
     @Test
     void testIsAvailable() {
-        assertThat(mayonaise.isAvailable(), is(false));
-        assertThat(counter.get(), is(0));
+        assertThat(mayonaise.isAvailable()).isFalse();
+        assertThat(counter.get()).isZero();
         resolve(mayonaise);
-        assertThat(mayonaise.isAvailable(), is(true));
-        assertThat(mayonaise.isAvailable(), is(true));
-        assertThat(counter.get(), is(1));
+        assertThat(mayonaise.isAvailable()).isTrue();
+        assertThat(mayonaise.isAvailable()).isTrue();
+        assertThat(counter.get()).isOne();
     }
 
     @Test
     void testIsAvailable_exception() {
-        assertThat(exception.isAvailable(), is(false));
-        assertThat(counter.get(), is(0));
+        assertThat(exception.isAvailable()).isFalse();
+        assertThat(counter.get()).isZero();
         resolve(exception);
-        assertThat(exception.isAvailable(), is(false));
-        assertThat(exception.isAvailable(), is(false));
-        assertThat(counter.get(), is(1));
+        assertThat(exception.isAvailable()).isFalse();
+        assertThat(exception.isAvailable()).isFalse();
+        assertThat(counter.get()).isOne();
     }
 
     @Test
     void testGetIfAvailable() {
-        assertThat(mayonaise.getIfAvailable(), is(Optional.empty()));
-        assertThat(counter.get(), is(0));
+        assertThat(mayonaise.getIfAvailable()).isEmpty();
+        assertThat(counter.get()).isZero();
         resolve(mayonaise);
-        assertThat(mayonaise.getIfAvailable(), is(Optional.of("I've seen them do it man, they f*n drown them in that shit!")));
-        assertThat(mayonaise.getIfAvailable(), is(Optional.of("I've seen them do it man, they f*n drown them in that shit!")));
-        assertThat(counter.get(), is(1));
+        assertThat(mayonaise.getIfAvailable()).contains("I've seen them do it man, they f*n drown them in that shit!");
+        assertThat(mayonaise.getIfAvailable()).contains("I've seen them do it man, they f*n drown them in that shit!");
+        assertThat(counter.get()).isOne();
     }
 
     @Test
     void testIfAvailable() {
-        AtomicInteger availableCounter = new AtomicInteger(0);
-        mayonaise.ifAvailable(value -> availableCounter.incrementAndGet());
-        assertThat(counter.get(), is(0));
-        assertThat(availableCounter.get(), is(0));
+        AtomicInteger callbackCounter = new AtomicInteger(0);
+        mayonaise.ifAvailable(value -> callbackCounter.incrementAndGet());
+        assertThat(counter.get()).isZero();
+        assertThat(callbackCounter.get()).isZero();
 
         resolve(mayonaise);
-        mayonaise.ifAvailable(value -> availableCounter.incrementAndGet());
-        assertThat(counter.get(), is(1));
-        assertThat(availableCounter.get(), is(1));
+        mayonaise.ifAvailable(value -> callbackCounter.incrementAndGet());
+        assertThat(counter.get()).isOne();
+        assertThat(callbackCounter.get()).isOne();
 
-        mayonaise.ifAvailable(value -> availableCounter.incrementAndGet());
-        assertThat(counter.get(), is(1));
-        assertThat(availableCounter.get(), is(2));
+        mayonaise.ifAvailable(value -> callbackCounter.incrementAndGet());
+        assertThat(counter.get()).isOne();
+        assertThat(callbackCounter.get()).isEqualTo(2);
     }
 
     @Test
     void testIfAvailable_exception() {
         AtomicInteger availableCounter = new AtomicInteger(0);
         exception.ifAvailable(value -> availableCounter.incrementAndGet());
-        assertThat(counter.get(), is(0));
-        assertThat(availableCounter.get(), is(0));
+        assertThat(counter.get()).isZero();
+        assertThat(availableCounter.get()).isZero();
 
         resolve(exception);
         exception.ifAvailable(value -> availableCounter.incrementAndGet());
         exception.ifAvailable(value -> availableCounter.incrementAndGet());
-        assertThat(counter.get(), is(1));
-        assertThat(availableCounter.get(), is(0));
+        assertThat(counter.get()).isOne();
+        assertThat(availableCounter.get()).isZero();
     }
 
     @Test
     void testMap() {
         AtomicInteger mapCounter = new AtomicInteger(0);
         Lazy<String> reverse = mayonaise.map(counting(mapCounter, s -> new StringBuffer(s).reverse().toString()));
-        assertThat(counter.get(), is(0));
-        assertThat(mapCounter.get(), is(0));
+        assertThat(counter.get()).isZero();
+        assertThat(mapCounter.get()).isZero();
+        assertThat(mayonaise.isAvailable()).isFalse();
+        assertThat(reverse.isAvailable()).isFalse();
 
         for (int i = 0; i < 100; i++) {
-            assertThat(reverse.get(), equalTo("!tihs taht ni meht nword n*f yeht ,nam ti od meht nees ev'I"));
+            assertThat(reverse.get()).isEqualTo("!tihs taht ni meht nword n*f yeht ,nam ti od meht nees ev'I");
         }
-        assertThat(counter.get(), is(1));
-        assertThat(mapCounter.get(), is(1));
+        assertThat(mayonaise.isAvailable()).isTrue();
+        assertThat(reverse.isAvailable()).isTrue();
+        assertThat(counter.get()).isOne();
+        assertThat(mapCounter.get()).isOne();
     }
 
     @Test
@@ -216,65 +209,74 @@ class LazyTest {
         AtomicInteger flatteningCounter = new AtomicInteger(0);
         Lazy<String> reverse = mayonaise.flatMap(counting(mapCounter,
                 s -> Lazy.of(counting(flatteningCounter, (Supplier<String>) s::toUpperCase))));
-        assertThat(counter.get(), is(0));
-        assertThat(mapCounter.get(), is(0));
-        assertThat(flatteningCounter.get(), is(0));
+        assertThat(counter.get()).isZero();
+        assertThat(mapCounter.get()).isZero();
+        assertThat(flatteningCounter.get()).isZero();
 
         for (int i = 0; i < 100; i++) {
-            assertThat(reverse.get(), equalTo("I'VE SEEN THEM DO IT MAN, THEY F*N DROWN THEM IN THAT SHIT!"));
+            assertThat(reverse.get()).isEqualTo("I'VE SEEN THEM DO IT MAN, THEY F*N DROWN THEM IN THAT SHIT!");
         }
-        assertThat(counter.get(), is(1));
-        assertThat(mapCounter.get(), is(1));
-        assertThat(flatteningCounter.get(), is(1));
+        assertThat(counter.get()).isOne();
+        assertThat(mapCounter.get()).isOne();
+        assertThat(flatteningCounter.get()).isOne();
     }
 
     @Test
     void testToString_unresolved() {
-        assertThat(mayonaise, hasToString(equalTo("Lazy[not yet resolved]")));
-        assertThat(counter.get(), is(0));
+        assertThat(mayonaise).hasToString("Lazy[not yet resolved]");
+        assertThat(counter.get()).isZero();
     }
 
     @Test
     void testToString_unresolved_exception() {
-        assertThat(exception, hasToString(equalTo("Lazy[not yet resolved]")));
-        assertThat(counter.get(), is(0));
+        assertThat(exception).hasToString("Lazy[not yet resolved]");
+        assertThat(counter.get()).isZero();
     }
 
     @Test
     void testToString_resolved() {
         resolve(mayonaise);
-        assertThat(mayonaise, hasToString(equalTo("Lazy[I've seen them do it man, they f*n drown them in that shit!]")));
-        assertThat(counter.get(), is(1));
+        assertThat(mayonaise).hasToString("Lazy[I've seen them do it man, they f*n drown them in that shit!]");
+        assertThat(counter.get()).isOne();
     }
 
     @Test
     void testToString_resolved_null() {
         Lazy<Object> lazyNull = Lazy.of(() -> null);
-        assertThat(lazyNull.get(), is(nullValue()));
-        assertThat(lazyNull, hasToString(equalTo("Lazy[null]")));
+        assertThat(lazyNull.get()).isNull();
+        assertThat(lazyNull).hasToString("Lazy[null]");
+
+        Lazy<Object> eagerNull = Lazy.eager(null);
+        assertThat(eagerNull.get()).isNull();
+        assertThat(eagerNull).hasToString("Lazy[null]");
     }
 
     @Test
     void testToString_unresolved_due_to_exception() {
         resolve(exception);
-        assertThat(exception, hasToString(equalTo("Lazy[not yet resolved]")));
-        assertThat(counter.get(), is(1));
+        assertThat(exception).hasToString("Lazy[not yet resolved]");
+        assertThat(exception.isAvailable()).isFalse();
+        assertThat(counter.get()).isOne();
+
+        resolve(exception);
+        assertThat(exception).hasToString("Lazy[not yet resolved]");
+        assertThat(exception.isAvailable()).isFalse();
+        assertThat(counter.get()).isEqualTo(2);
     }
 
     @Test
     @SuppressWarnings("deprecation")
-        // We test the deprecated method
     void testDeprecatedFactoryMethod() {
         Lazy<String> lazyString = Lazy.lazy(mayonaise);
-        assertThat(lazyString.isAvailable(), is(false));
-        assertThat(mayonaise.isAvailable(), is(false));
+        assertThat(lazyString.isAvailable()).isFalse();
+        assertThat(mayonaise.isAvailable()).isFalse();
 
-        assertThat(lazyString.get(), is("I've seen them do it man, they f*n drown them in that shit!"));
-        assertThat(lazyString.get(), is("I've seen them do it man, they f*n drown them in that shit!"));
+        assertThat(lazyString.get()).isEqualTo("I've seen them do it man, they f*n drown them in that shit!");
+        assertThat(lazyString.get()).isEqualTo("I've seen them do it man, they f*n drown them in that shit!");
 
-        assertThat(lazyString.isAvailable(), is(true));
-        assertThat(mayonaise.isAvailable(), is(true));
-        assertThat(counter.get(), is(1));
+        assertThat(lazyString.isAvailable()).isTrue();
+        assertThat(mayonaise.isAvailable()).isTrue();
+        assertThat(counter.get()).isOne();
     }
 
     <T> Supplier<T> counting(Supplier<T> supplier) {
