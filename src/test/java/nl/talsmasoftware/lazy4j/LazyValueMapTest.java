@@ -17,6 +17,9 @@ package nl.talsmasoftware.lazy4j;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LazyValueMapTest {
@@ -37,6 +40,57 @@ class LazyValueMapTest {
         assertThat(subject.entrySet()).isEmpty();
         assertThat(subject.isEmpty());
         assertThat(lazy.isAvailable()).isFalse();
+    }
+
+    @Test
+    void entrySet_accessingKeysDoesNotTriggerEvaluation() {
+        Lazy<String> lazy = Lazy.of(() -> "test");
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        subject.putLazy("key", lazy);
+
+        assertThat(subject.entrySet()).hasSize(1);
+        for (Map.Entry<String, String> entry : subject.entrySet()) {
+            assertThat(entry.getKey()).isEqualTo("key");
+        }
+
+        assertThat(lazy.isAvailable()).isFalse();
+    }
+
+    @Test
+    void entrySet_accessingValuesTriggersEagerEvaluation() {
+        Lazy<String> lazy = Lazy.of(() -> "test");
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        subject.putLazy("key", lazy);
+
+        assertThat(subject.entrySet()).hasSize(1);
+        for (Map.Entry<String, String> entry : subject.entrySet()) {
+            assertThat(entry.getValue()).isEqualTo("test");
+        }
+
+        assertThat(lazy.isAvailable()).isTrue();
+    }
+
+    @Test
+    void entrySet_setValue() {
+        Lazy<String> lazy = Lazy.of(() -> "test");
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        subject.putLazy("key", lazy);
+
+        assertThat(subject.entrySet()).hasSize(1);
+        for (Map.Entry<String, String> entry : subject.entrySet()) {
+            assertThat(entry.setValue("other")).isNull(); // lazy was not yet available.
+        }
+        assertThat(subject.getLazy("key").isAvailable()).isTrue();
+        assertThat(subject.get("key")).isEqualTo("other");
+
+        assertThat(subject.entrySet()).hasSize(1);
+        for (Map.Entry<String, String> entry : subject.entrySet()) {
+            assertThat(entry.setValue("yet another")).isEqualTo("other");
+        }
+        assertThat(subject.getLazy("key").isAvailable()).isTrue();
+        assertThat(subject.get("key")).isEqualTo("yet another");
+
+        assertThat(lazy.isAvailable()).isFalse(); // No eager evaluation of lazy value.
     }
 
     @Test
@@ -212,5 +266,332 @@ class LazyValueMapTest {
 
         assertThat(subject.containsValue("does not occur")).isFalse();
         subject.lazyValues().stream().forEach(value -> assertThat(value.isAvailable()).isTrue());
+    }
+
+    @Test
+    void size_mustMatchBackingMap() {
+        Map<String, Lazy<String>> backingMap = new java.util.LinkedHashMap<>();
+        LazyValueMap<String, String> subject = new LazyValueMap<>(() -> backingMap);
+
+        assertThat(subject).isEmpty();
+        backingMap.put("key1", Lazy.of(() -> "value1"));
+        assertThat(subject).hasSize(1);
+        backingMap.put("key2", Lazy.of(() -> "value2"));
+        assertThat(subject).hasSize(2);
+        backingMap.remove("key1");
+        assertThat(subject).hasSize(1);
+        subject.clear();
+        assertThat(subject).isEmpty();
+        assertThat(backingMap).isEmpty();
+    }
+
+    @Test
+    void containsKey() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        subject.putLazy("key1", () -> "lazy1");
+
+        assertThat(subject.containsKey("key1")).isTrue();
+        assertThat(subject.containsKey("key2")).isFalse();
+        assertThat(subject.getLazy("key1").isAvailable()).isFalse();
+    }
+
+    @Test
+    void remove() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        Lazy<String> lazy = Lazy.of(() -> "test");
+        subject.putLazy("lazy", lazy);
+        subject.put("eager", "eager");
+
+        assertThat(subject.remove("missing")).isNull();
+        assertThat(subject.remove("eager")).isEqualTo("eager");
+        assertThat(subject.remove("lazy")).isNull();
+        assertThat(lazy.isAvailable()).isFalse();
+    }
+
+    @Test
+    void keySet() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        assertThat(subject.keySet()).isEmpty();
+        subject.put("eager", "eager");
+        assertThat(subject.keySet()).containsExactly("eager");
+        subject.putLazy("lazy", () -> "lazy");
+        assertThat(subject.keySet()).containsExactly("eager", "lazy");
+        assertThat(subject.getLazy("lazy").isAvailable()).isFalse();
+    }
+
+    @Test
+    void computeIfAbsent() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        assertThat(subject.computeIfAbsent("key", k -> "value")).isEqualTo("value");
+        assertThat(subject.get("key")).isEqualTo("value");
+
+        assertThat(subject.computeIfAbsent("key", k -> "other")).isEqualTo("value");
+        assertThat(subject.get("key")).isEqualTo("value");
+    }
+
+    @Test
+    void computeIfAbsentLazy() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        AtomicBoolean called = new AtomicBoolean(false);
+
+        subject.computeIfAbsentLazy("key", k -> {
+            called.set(true);
+            return "value";
+        });
+        assertThat(subject.containsKey("key")).isTrue();
+        assertThat(called.get()).isFalse();
+
+        assertThat(subject.get("key")).isEqualTo("value");
+        assertThat(called.get()).isTrue();
+    }
+
+    @Test
+    void putIfAbsent() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        assertThat(subject.putIfAbsent("key", "value")).isNull();
+        assertThat(subject.get("key")).isEqualTo("value");
+
+        assertThat(subject.putIfAbsent("key", "other")).isEqualTo("value");
+        assertThat(subject.get("key")).isEqualTo("value");
+    }
+
+    @Test
+    void putIfAbsentLazy() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        Lazy<String> lazy = Lazy.of(() -> "value");
+
+        assertThat(subject.putIfAbsentLazy("key", lazy)).isNull();
+        assertThat(lazy.isAvailable()).isFalse();
+
+        assertThat(subject.putIfAbsentLazy("key", () -> "other").isAvailable()).isFalse();
+        assertThat(lazy.isAvailable()).isFalse();
+
+        assertThat(subject.get("key")).isEqualTo("value");
+        assertThat(lazy.isAvailable()).isTrue();
+    }
+
+    @Test
+    void replace() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        assertThat(subject.replace("newKey", "other")).isNull();
+        assertThat(subject.containsKey("newKey")).isFalse();
+
+        subject.put("key", "value");
+        assertThat(subject.replace("key", "other")).isEqualTo("value");
+
+        Lazy<String> lazy = Lazy.of(() -> "lazy value");
+        subject.putLazy("key", lazy);
+        assertThat(subject.replace("key", "other")).isNull(); // lazy value not eagerly evaluated.
+        assertThat(subject.get("key")).isEqualTo("other");
+        assertThat(lazy.isAvailable()).isFalse();
+    }
+
+    @Test
+    void replaceLazy() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        assertThat(subject.replaceLazy("newKey", () -> "other")).isNull();
+        assertThat(subject.containsKey("newKey")).isFalse();
+
+        subject.putLazy("key", () -> "lazy value");
+        Lazy<String> result = subject.replaceLazy("key", () -> "other value");
+        assertThat(result.isAvailable()).isFalse();
+        assertThat(subject.getLazy("key").isAvailable()).isFalse();
+
+        assertThat(result.get()).isEqualTo("lazy value");
+        assertThat(subject.get("key")).isEqualTo("other value");
+    }
+
+    @Test
+    void computeIfPresent() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        AtomicBoolean called = new AtomicBoolean(false);
+
+        // not present
+        String result = subject.computeIfPresent("newKey", (k, v) -> {
+            called.set(true);
+            return "other";
+        });
+        assertThat(result).isNull();
+        assertThat(called.get()).isFalse();
+        assertThat(subject.containsKey("newKey")).isFalse();
+
+        // present lazy value
+        subject.putLazy("key", () -> "value");
+        result = subject.computeIfPresent("key", (k, v) -> {
+            called.set(true);
+            return v + "+other";
+        });
+        assertThat(result).isEqualTo("value+other");
+        assertThat(called.get()).isTrue();
+        assertThat(subject.containsKey("key")).isTrue();
+        assertThat(subject.getLazy("key").isAvailable()).isTrue();
+        assertThat(subject.get("key")).isEqualTo("value+other");
+    }
+
+    @Test
+    void computeIfPresentLazy() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        AtomicBoolean called = new AtomicBoolean(false);
+
+        // not present
+        Lazy<String> result = subject.computeIfPresentLazy("newKey", (k, v) -> {
+            called.set(true);
+            return v + "other";
+        });
+        assertThat(result).isNull();
+        assertThat(called.get()).isFalse();
+        assertThat(subject.containsKey("newKey")).isFalse();
+
+        // lazy value
+        subject.putLazy("key", () -> "value");
+        result = subject.computeIfPresentLazy("key", (k, v) -> {
+            called.set(true);
+            return v + "+other";
+        });
+        assertThat(result.isAvailable()).isFalse();
+        assertThat(called.get()).isFalse();
+        assertThat(subject.containsKey("key")).isTrue();
+        assertThat(subject.getLazy("key").isAvailable()).isFalse();
+
+        assertThat(subject.get("key")).isEqualTo("value+other");
+        assertThat(result.isAvailable()).isTrue();
+        assertThat(result.get()).isEqualTo("value+other");
+    }
+
+    @Test
+    void compute() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        AtomicBoolean called = new AtomicBoolean(false);
+
+        // No existing value
+        String result = subject.compute("newKey", (k, v) -> {
+            called.set(true);
+            return v + "+other";
+        });
+        assertThat(result).isEqualTo("null+other");
+        assertThat(called.get()).isTrue();
+        assertThat(subject.containsKey("newKey")).isTrue();
+        assertThat(subject.getLazy("newKey").isAvailable()).isTrue();
+        assertThat(subject.get("newKey")).isEqualTo("null+other");
+
+        // Existing value
+        subject.putLazy("key", () -> "value");
+        called.set(false);
+        result = subject.compute("key", (k, v) -> {
+            called.set(true);
+            return v + "+other";
+        });
+        assertThat(result).isEqualTo("value+other");
+        assertThat(called.get()).isTrue();
+        assertThat(subject.containsKey("key")).isTrue();
+        assertThat(subject.getLazy("key").isAvailable()).isTrue();
+        assertThat(subject.get("key")).isEqualTo("value+other");
+    }
+
+    @Test
+    void computeLazy() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        AtomicBoolean called = new AtomicBoolean(false);
+
+        // No existing value
+        Lazy<String> result = subject.computeLazy("newKey", (k, v) -> {
+            called.set(true);
+            return v + "+other";
+        });
+        assertThat(result.isAvailable()).isFalse();
+        assertThat(called.get()).isFalse();
+        assertThat(subject.containsKey("newKey")).isTrue();
+        assertThat(subject.getLazy("newKey").isAvailable()).isFalse();
+        assertThat(subject.get("newKey")).isEqualTo("null+other");
+
+        // Existing value
+        subject.putLazy("key", () -> "value");
+        called.set(false);
+        result = subject.computeLazy("key", (k, v) -> {
+            called.set(true);
+            return v + "+other";
+        });
+        assertThat(result.isAvailable()).isFalse();
+        assertThat(called.get()).isFalse();
+        assertThat(subject.containsKey("key")).isTrue();
+        assertThat(subject.getLazy("key").isAvailable()).isFalse();
+        assertThat(subject.get("key")).isEqualTo("value+other");
+    }
+
+    @Test
+    void merge() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        AtomicBoolean called = new AtomicBoolean(false);
+
+        // No existing value
+        String result = subject.merge("newKey", "newValue", (v1, v2) -> {
+            called.set(true);
+            return v1 + v2;
+        });
+        assertThat(result).isEqualTo("newValue");
+        assertThat(called.get()).isFalse();
+        assertThat(subject.containsKey("newKey")).isTrue();
+        assertThat(subject.getLazy("newKey").isAvailable()).isTrue();
+        assertThat(subject.get("newKey")).isEqualTo("newValue");
+
+        // Existing lazy value
+        subject.putLazy("key", () -> "oldValue");
+        called.set(false);
+        result = subject.merge("key", "newValue", (v1, v2) -> {
+            called.set(true);
+            return v1 + v2;
+        });
+        assertThat(result).isEqualTo("oldValuenewValue");
+        assertThat(called.get()).isTrue();
+        assertThat(subject.containsKey("key")).isTrue();
+        assertThat(subject.getLazy("key").isAvailable()).isTrue();
+        assertThat(subject.get("key")).isEqualTo("oldValuenewValue");
+    }
+
+    @Test
+    void mergeLazy_noExistingValue() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        AtomicBoolean called = new AtomicBoolean(false);
+
+        Lazy<String> result = subject.mergeLazy("newKey", () -> "newValue", (v1, v2) -> {
+            called.set(true);
+            return v1 + v2;
+        });
+        assertThat(subject.containsKey("newKey")).isTrue();
+        assertThat(called.get()).isFalse();
+        assertThat(result.isAvailable()).isFalse();
+        assertThat(subject.getLazy("newKey").isAvailable()).isFalse();
+
+        assertThat(subject.get("newKey")).isEqualTo("newValue");
+        assertThat(result.isAvailable()).isTrue();
+        assertThat(called.get()).isFalse();
+    }
+
+    @Test
+    void mergeLazy_existingLazyValue() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        AtomicBoolean called = new AtomicBoolean(false);
+        Lazy<String> previousLazy = Lazy.of(() -> "oldValue");
+        Lazy<String> newLazy = Lazy.of(() -> "newValue");
+        subject.putLazy("key", previousLazy);
+
+        Lazy<String> result = subject.mergeLazy("key", newLazy, (v1, v2) -> {
+            called.set(true);
+            return v1 + v2;
+        });
+        // Merge is not performed until the lazy value is accessed.
+        assertThat(subject.containsKey("key")).isTrue();
+        assertThat(called.get()).isFalse();
+        assertThat(result.isAvailable()).isFalse();
+        assertThat(newLazy.isAvailable()).isFalse();
+        assertThat(previousLazy.isAvailable()).isFalse();
+
+        // Accessing the result triggers eager merge.
+        assertThat(result.get()).isEqualTo("oldValuenewValue");
+        assertThat(called.get()).isTrue();
+        assertThat(subject.getLazy("key").isAvailable()).isTrue();
+        assertThat(newLazy.isAvailable()).isTrue();
+        assertThat(previousLazy.isAvailable()).isTrue();
+        assertThat(subject.get("key")).isEqualTo("oldValuenewValue");
     }
 }

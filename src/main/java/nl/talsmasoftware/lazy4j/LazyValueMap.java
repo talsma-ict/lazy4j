@@ -407,26 +407,6 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
     }
 
     /**
-     * Replaces the entry for the specified key only if currently mapped to the specified old value.
-     *
-     * <p>
-     * Comparison with {@code oldValue} uses causes eager evaluation of any existing lazy value for the specified key.
-     *
-     * @param key      key with which the specified value is associated.
-     * @param oldValue value expected to be currently associated with the specified key.
-     * @param newValue value to be associated with the specified key if the current value matches {@code oldValue}.
-     * @return {@code true} if the value was replaced, {@code false} otherwise.
-     */
-    @Override
-    public boolean replace(K key, V oldValue, V newValue) {
-        if (containsKey(key) && Objects.equals(oldValue, get(key))) {
-            put(key, newValue);
-            return true;
-        }
-        return false;
-    }
-
-    /**
      * If the value for the specified key is present, computes a new mapping given the key and its current value.
      *
      * <p>
