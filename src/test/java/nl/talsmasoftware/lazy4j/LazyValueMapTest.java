@@ -326,11 +326,11 @@ class LazyValueMapTest {
     }
 
     @Test
-    void computeIfAbsentLazy() {
+    void lazyComputeIfAbsent() {
         LazyValueMap<String, String> subject = new LazyValueMap<>();
         AtomicBoolean called = new AtomicBoolean(false);
 
-        subject.computeIfAbsentLazy("key", k -> {
+        subject.lazyComputeIfAbsent("key", k -> {
             called.set(true);
             return "value";
         });
@@ -352,14 +352,14 @@ class LazyValueMapTest {
     }
 
     @Test
-    void putIfAbsentLazy() {
+    void putLazyIfAbsent() {
         LazyValueMap<String, String> subject = new LazyValueMap<>();
         Lazy<String> lazy = Lazy.of(() -> "value");
 
-        assertThat(subject.putIfAbsentLazy("key", lazy)).isNull();
+        assertThat(subject.lazyPutIfAbsent("key", lazy)).isNull();
         assertThat(lazy.isAvailable()).isFalse();
 
-        assertThat(subject.putIfAbsentLazy("key", () -> "other").isAvailable()).isFalse();
+        assertThat(subject.lazyPutIfAbsent("key", () -> "other").isAvailable()).isFalse();
         assertThat(lazy.isAvailable()).isFalse();
 
         assertThat(subject.get("key")).isEqualTo("value");
@@ -383,13 +383,13 @@ class LazyValueMapTest {
     }
 
     @Test
-    void replaceLazy() {
+    void lazyReplace() {
         LazyValueMap<String, String> subject = new LazyValueMap<>();
-        assertThat(subject.replaceLazy("newKey", () -> "other")).isNull();
+        assertThat(subject.lazyReplace("newKey", () -> "other")).isNull();
         assertThat(subject.containsKey("newKey")).isFalse();
 
         subject.putLazy("key", () -> "lazy value");
-        Lazy<String> result = subject.replaceLazy("key", () -> "other value");
+        Lazy<String> result = subject.lazyReplace("key", () -> "other value");
         assertThat(result.isAvailable()).isFalse();
         assertThat(subject.getLazy("key").isAvailable()).isFalse();
 
@@ -425,12 +425,12 @@ class LazyValueMapTest {
     }
 
     @Test
-    void computeIfPresentLazy() {
+    void lazyComputeIfPresent() {
         LazyValueMap<String, String> subject = new LazyValueMap<>();
         AtomicBoolean called = new AtomicBoolean(false);
 
         // not present
-        Lazy<String> result = subject.computeIfPresentLazy("newKey", (k, v) -> {
+        Lazy<String> result = subject.lazyComputeIfPresent("newKey", (k, v) -> {
             called.set(true);
             return v + "other";
         });
@@ -440,7 +440,7 @@ class LazyValueMapTest {
 
         // lazy value
         subject.putLazy("key", () -> "value");
-        result = subject.computeIfPresentLazy("key", (k, v) -> {
+        result = subject.lazyComputeIfPresent("key", (k, v) -> {
             called.set(true);
             return v + "+other";
         });
@@ -485,12 +485,12 @@ class LazyValueMapTest {
     }
 
     @Test
-    void computeLazy() {
+    void lazyCompute() {
         LazyValueMap<String, String> subject = new LazyValueMap<>();
         AtomicBoolean called = new AtomicBoolean(false);
 
         // No existing value
-        Lazy<String> result = subject.computeLazy("newKey", (k, v) -> {
+        Lazy<String> result = subject.lazyCompute("newKey", (k, v) -> {
             called.set(true);
             return v + "+other";
         });
@@ -503,7 +503,7 @@ class LazyValueMapTest {
         // Existing value
         subject.putLazy("key", () -> "value");
         called.set(false);
-        result = subject.computeLazy("key", (k, v) -> {
+        result = subject.lazyCompute("key", (k, v) -> {
             called.set(true);
             return v + "+other";
         });
@@ -545,11 +545,11 @@ class LazyValueMapTest {
     }
 
     @Test
-    void mergeLazy_noExistingValue() {
+    void lazyMerge_noExistingValue() {
         LazyValueMap<String, String> subject = new LazyValueMap<>();
         AtomicBoolean called = new AtomicBoolean(false);
 
-        Lazy<String> result = subject.mergeLazy("newKey", () -> "newValue", (v1, v2) -> {
+        Lazy<String> result = subject.lazyMerge("newKey", () -> "newValue", (v1, v2) -> {
             called.set(true);
             return v1 + v2;
         });
@@ -564,14 +564,14 @@ class LazyValueMapTest {
     }
 
     @Test
-    void mergeLazy_existingLazyValue() {
+    void lazyMergeValue() {
         LazyValueMap<String, String> subject = new LazyValueMap<>();
         AtomicBoolean called = new AtomicBoolean(false);
         Lazy<String> previousLazy = Lazy.of(() -> "oldValue");
         Lazy<String> newLazy = Lazy.of(() -> "newValue");
         subject.putLazy("key", previousLazy);
 
-        Lazy<String> result = subject.mergeLazy("key", newLazy, (v1, v2) -> {
+        Lazy<String> result = subject.lazyMerge("key", newLazy, (v1, v2) -> {
             called.set(true);
             return v1 + v2;
         });

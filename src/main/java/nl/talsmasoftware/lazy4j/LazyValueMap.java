@@ -96,58 +96,14 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
     }
 
     /**
-     * Returns a {@code Set} view of the mappings contained in this map.
-     *
-     * <p>
-     * The set supports mutation operations such as removal and {@link Map.Entry#setValue(Object)} calls
-     * <em>if</em> the backing map supports them.
-     *
-     * @return A {@code Set} view of the mapping entries contained in this map.
-     */
-    @Override
-    public Set<Entry<K, V>> entrySet() {
-        return new LazyEntrySet<>(delegate.entrySet());
-    }
-
-    /**
-     * Gets the value for the specified key, forcing the lazy value to be evaluated if necessary.
-     *
-     * @param key the key whose associated value is to be returned
-     * @return The value for the specified key, or {@code null} if the map contains no mapping for the key.
-     * @see #getIfAvailable(Object)
-     * @see #getLazy(Object)
-     */
-    @Override
-    public V get(Object key) {
-        return getNullSafe(getLazy(key));
-    }
-
-    /**
      * Gets the lazy value for the specified key.
      *
      * @param key the key whose associated value is to be returned
      * @return The lazy value for the specified key, or {@code null} if the map contains no mapping for the key.
+     * @see #get(Object)
      */
     public Lazy<V> getLazy(Object key) {
         return delegate.get(key);
-    }
-
-    /**
-     * Puts the specified value for the specified key.
-     *
-     * <p>
-     * This value will <strong>not</strong> be lazy and will be available immediately.
-     *
-     * @param key   the key with which the specified value is to be associated.
-     * @param value the new value to be associated with the specified key.
-     * @return The previous value associated with key,  or {@code null} if there was no mapping for key.
-     * A null result can also indicate that <strong>the previous lazy value was not yet available</strong>.
-     * @implNote The returned previous mapping, if any, is <em>not</em> eagerly evaluated by this method.
-     * @see #putLazy(Object, Supplier)
-     */
-    @Override
-    public V put(K key, V value) {
-        return getIfAvailableElseNull(putLazy(key, Lazy.eager(value)));
     }
 
     /**
@@ -170,6 +126,105 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
     }
 
     /**
+     * Lazy variant of {@link #putIfAbsent(Object, Object)}.
+     *
+     * <p>
+     * If the key is absent, associates it with a lazy value constructed from the given supplier.
+     * If a mapping already exists, it is returned and not evaluated by this method.
+     *
+     * @param key   key with which the specified lazy value is to be associated.
+     * @param value supplier of the value to associate if absent (required, non-{@code null}).
+     * @return the existing lazy value if present, or {@code null} if the association was added.
+     */
+    public Lazy<V> lazyPutIfAbsent(K key, Supplier<V> value) {
+        return delegate.putIfAbsent(key, Lazy.of(value));
+    }
+
+    /**
+     * Lazy variant of {@link #compute(Object, BiFunction)}.
+     *
+     * <p>
+     * Stores a lazy remapping that invokes {@code remappingFunction} with the key and the evaluated
+     * current value (which may be {@code null}), when needed.
+     *
+     * <p>
+     * The remapping function (and eager evaluation of the existing value) is applied lazily and will only be evaluated
+     * when the computed value is actually needed for the first time.
+     *
+     * @param key               key with which the specified value is associated.
+     * @param remappingFunction the function to compute a value.
+     * @return the new lazy value associated with the specified key.
+     */
+    public Lazy<V> lazyCompute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+        return delegate.compute(key, (k, v) -> Lazy.of(() -> remappingFunction.apply(k, getNullSafe(v))));
+    }
+
+    /**
+     * Lazy variant of {@link #computeIfAbsent(Object, Function)}.
+     *
+     * <p>
+     * Stores a lazy computation for the value if the key is not present.
+     * The mapping function itself is not executed until the value is required for the first time.
+     *
+     * @param key             key with which the computed value is to be associated.
+     * @param mappingFunction the function to compute a value.
+     * @return the lazy value associated with the specified key (existing or newly created).
+     */
+    public Lazy<V> lazyComputeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+        return delegate.computeIfAbsent(key, k -> Lazy.of(() -> mappingFunction.apply(k)));
+    }
+
+    /**
+     * Lazy variant of {@link #computeIfPresent(Object, BiFunction)}.
+     *
+     * <p>
+     * If a non-null mapping exists, stores a lazy remapping that invokes {@code remappingFunction}
+     * with the key and the evaluated current value when needed.
+     *
+     * @param key               key with which the specified value is associated.
+     * @param remappingFunction the function to compute a value.
+     * @return the new lazy value associated with the specified key, or {@code null} if none.
+     */
+    public Lazy<V> lazyComputeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+        return delegate.computeIfPresent(key, (k, v) -> Lazy.of(() -> remappingFunction.apply(k, getNullSafe(v))));
+    }
+
+    /**
+     * Lazy variant of {@link #replace(Object, Object)}.
+     *
+     * <p>
+     * Replaces the entry for the specified key only if it is currently mapped to some value,
+     * associating it with the given lazy supplier. The previous lazy value, if any, is returned
+     * without being evaluated by this method.
+     *
+     * @param key   key with which the specified lazy value is associated.
+     * @param value supplier of the new value (required, non-{@code null}).
+     * @return the previous lazy value associated with the key, or {@code null} if there was no mapping.
+     * @see #replace(Object, Object)
+     */
+    public Lazy<V> lazyReplace(K key, Supplier<V> value) {
+        return delegate.replace(key, Lazy.of(value));
+    }
+
+    /**
+     * Lazy variant of {@link #merge(Object, Object, BiFunction)}.
+     *
+     * <p>
+     * If the key is absent, associates it with a lazy value from the given supplier. If present,
+     * associates it with a lazy value that lazily applies the {@code remappingFunction} to the
+     * existing and supplied values only when needed for the first time.
+     *
+     * @param key               key with which the resulting value is to be associated.
+     * @param value             supplier of the value to use if absent (required, non-{@code null}).
+     * @param remappingFunction the function to recompute a value if present.
+     * @return the new lazy value associated with the specified key.
+     * @throws NullPointerException if {@code value} is {@code null} (via {@link Lazy#of(Supplier)}).
+     */
+    public Lazy<V> lazyMerge(K key, Supplier<V> value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+        return delegate.merge(key, Lazy.of(value), (v1, v2) -> Lazy.of(() -> remappingFunction.apply(getNullSafe(v1), getNullSafe(v2))));
+    }
+
+    /**
      * Returns a {@link Collection} view of the lazy values contained in this map.
      *
      * @return The lazy values contained in this map.
@@ -177,6 +232,50 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      */
     public Collection<Lazy<V>> lazyValues() {
         return delegate.values();
+    }
+
+    /**
+     * Returns a {@code Set} view of the mappings contained in this map.
+     *
+     * <p>
+     * The set supports mutation operations such as removal and {@link Map.Entry#setValue(Object)} calls
+     * <em>if</em> the backing map supports them.
+     *
+     * @return A {@code Set} view of the mapping entries contained in this map.
+     */
+    @Override
+    public Set<Entry<K, V>> entrySet() {
+        return new LazyEntrySet<>(delegate.entrySet());
+    }
+
+    /**
+     * Gets the value for the specified key, forcing the lazy value to be evaluated if necessary.
+     *
+     * @param key the key whose associated value is to be returned
+     * @return The value for the specified key, or {@code null} if the map contains no mapping for the key.
+     * @see #getLazy(Object)
+     */
+    @Override
+    public V get(Object key) {
+        return getNullSafe(getLazy(key));
+    }
+
+    /**
+     * Puts the specified value for the specified key.
+     *
+     * <p>
+     * This value will <strong>not</strong> be lazy and will be available immediately.
+     *
+     * @param key   the key with which the specified value is to be associated.
+     * @param value the new value to be associated with the specified key.
+     * @return The previous value associated with key,  or {@code null} if there was no mapping for key.
+     * A null result can also indicate that <strong>the previous lazy value was not yet available</strong>.
+     * @implNote The returned previous mapping, if any, is <em>not</em> eagerly evaluated by this method.
+     * @see #putLazy(Object, Supplier)
+     */
+    @Override
+    public V put(K key, V value) {
+        return getIfAvailableElseNull(putLazy(key, Lazy.eager(value)));
     }
 
     /**
@@ -290,26 +389,11 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * @param key             key with which the computed value is to be associated.
      * @param mappingFunction the function to compute a value.
      * @return the current (existing or computed) value associated with the specified key, or {@code null} if none.
-     * @see #computeIfAbsentLazy(Object, Function)
+     * @see #lazyComputeIfAbsent(Object, Function)
      */
     @Override
     public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
-        return getNullSafe(computeIfAbsentLazy(key, mappingFunction));
-    }
-
-    /**
-     * Lazy variant of {@link #computeIfAbsent(Object, Function)}.
-     *
-     * <p>
-     * Stores a lazy computation for the value if the key is not present.
-     * The mapping function itself is not executed until the value is required for the first time.
-     *
-     * @param key             key with which the computed value is to be associated.
-     * @param mappingFunction the function to compute a value.
-     * @return the lazy value associated with the specified key (existing or newly created).
-     */
-    public Lazy<V> computeIfAbsentLazy(K key, Function<? super K, ? extends V> mappingFunction) {
-        return delegate.computeIfAbsent(key, k -> Lazy.of(() -> mappingFunction.apply(k)));
+        return getNullSafe(lazyComputeIfAbsent(key, mappingFunction));
     }
 
     /**
@@ -323,26 +407,11 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * @param key   key with which the specified value is to be associated.
      * @param value value to associate with the specified key if absent.
      * @return the previous value if present and already available; otherwise {@code null}.
-     * @see #putIfAbsentLazy(Object, Supplier)
+     * @see #lazyPutIfAbsent(Object, Supplier)
      */
     @Override
     public V putIfAbsent(K key, V value) {
-        return getIfAvailableElseNull(putIfAbsentLazy(key, Lazy.eager(value)));
-    }
-
-    /**
-     * Lazy variant of {@link #putIfAbsent(Object, Object)}.
-     *
-     * <p>
-     * If the key is absent, associates it with a lazy value constructed from the given supplier.
-     * If a mapping already exists, it is returned and not evaluated by this method.
-     *
-     * @param key   key with which the specified lazy value is to be associated.
-     * @param value supplier of the value to associate if absent (required, non-{@code null}).
-     * @return the existing lazy value if present, or {@code null} if the association was added.
-     */
-    public Lazy<V> putIfAbsentLazy(K key, Supplier<V> value) {
-        return delegate.putIfAbsent(key, Lazy.of(value));
+        return getIfAvailableElseNull(lazyPutIfAbsent(key, Lazy.eager(value)));
     }
 
     /**
@@ -355,27 +424,11 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * @param key   key with which the specified value is associated.
      * @param value value to be associated with the specified key.
      * @return the previous value if present and available; otherwise {@code null}.
-     * @see #replaceLazy(Object, Supplier)
+     * @see #lazyReplace(Object, Supplier)
      */
     @Override
     public V replace(K key, V value) {
-        return getIfAvailableElseNull(replaceLazy(key, Lazy.eager(value)));
-    }
-
-    /**
-     * Lazy variant of {@link #replace(Object, Object)}.
-     *
-     * <p>
-     * Replaces the entry for the specified key only if it is currently mapped to some value,
-     * associating it with the given lazy supplier. The previous lazy value, if any, is returned
-     * without being evaluated by this method.
-     *
-     * @param key   key with which the specified lazy value is associated.
-     * @param value supplier of the new value (required, non-{@code null}).
-     * @return the previous lazy value associated with the key, or {@code null} if there was no mapping.
-     */
-    public Lazy<V> replaceLazy(K key, Supplier<V> value) {
-        return delegate.replace(key, Lazy.of(value));
+        return getIfAvailableElseNull(lazyReplace(key, Lazy.eager(value)));
     }
 
     /**
@@ -384,31 +437,16 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * <p>
      * If the map contains a lazy value for the specified key,
      * it will be eagerly evaluated and applied in the remapping function.
-     * Consider using {@link #computeIfPresentLazy(Object, BiFunction)} instead, to prevent eager evaluation.
+     * Consider using {@link #lazyComputeIfPresent(Object, BiFunction)} instead, to prevent eager evaluation.
      *
      * @param key               key with which the specified value is associated.
      * @param remappingFunction the function to compute a value.
      * @return the new value associated with the specified key, or {@code null} if none.
-     * @see #computeIfPresentLazy(Object, BiFunction)
+     * @see #lazyComputeIfPresent(Object, BiFunction)
      */
     @Override
     public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        return getNullSafe(computeIfPresentLazy(key, remappingFunction));
-    }
-
-    /**
-     * Lazy variant of {@link #computeIfPresent(Object, BiFunction)}.
-     *
-     * <p>
-     * If a non-null mapping exists, stores a lazy remapping that invokes {@code remappingFunction}
-     * with the key and the evaluated current value when needed.
-     *
-     * @param key               key with which the specified value is associated.
-     * @param remappingFunction the function to compute a value.
-     * @return the new lazy value associated with the specified key, or {@code null} if none.
-     */
-    public Lazy<V> computeIfPresentLazy(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        return delegate.computeIfPresent(key, (k, v) -> Lazy.of(() -> remappingFunction.apply(k, getNullSafe(v))));
+        return getNullSafe(lazyComputeIfPresent(key, remappingFunction));
     }
 
     /**
@@ -418,35 +456,16 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * <p>
      * If the map contains a lazy value for the specified key,
      * it will be eagerly evaluated and applied in the remapping function.
-     * Consider using {@link #computeLazy(Object, BiFunction)} instead, to prevent eager evaluation.
+     * Consider using {@link #lazyCompute(Object, BiFunction)} instead, to prevent eager evaluation.
      *
      * @param key               key with which the specified value is associated.
      * @param remappingFunction the function to compute a value.
      * @return the new value associated with the specified key, or {@code null} if none.
-     * @see #computeLazy(Object, BiFunction)
+     * @see #lazyCompute(Object, BiFunction)
      */
     @Override
     public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        return getNullSafe(computeLazy(key, remappingFunction));
-    }
-
-    /**
-     * Lazy variant of {@link #compute(Object, BiFunction)}.
-     *
-     * <p>
-     * Stores a lazy remapping that invokes {@code remappingFunction} with the key and the evaluated
-     * current value (which may be {@code null}), when needed.
-     *
-     * <p>
-     * The remapping function (and eager evaluation of the existing value) is applied lazily and will only be evaluated
-     * when the computed value is actually needed for the first time.
-     *
-     * @param key               key with which the specified value is associated.
-     * @param remappingFunction the function to compute a value.
-     * @return the new lazy value associated with the specified key.
-     */
-    public Lazy<V> computeLazy(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        return delegate.compute(key, (k, v) -> Lazy.of(() -> remappingFunction.apply(k, getNullSafe(v))));
+        return getNullSafe(lazyCompute(key, remappingFunction));
     }
 
     /**
@@ -461,29 +480,11 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * @param value             the value to use if absent.
      * @param remappingFunction the function to recompute a value if present.
      * @return the new value associated with the specified key, or {@code null} if none.
-     * @see #mergeLazy(Object, Supplier, BiFunction)
+     * @see #lazyMerge(Object, Supplier, BiFunction)
      */
     @Override
     public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-        return getNullSafe(mergeLazy(key, Lazy.eager(value), remappingFunction));
-    }
-
-    /**
-     * Lazy variant of {@link #merge(Object, Object, BiFunction)}.
-     *
-     * <p>
-     * If the key is absent, associates it with a lazy value from the given supplier. If present,
-     * associates it with a lazy value that lazily applies the {@code remappingFunction} to the
-     * existing and supplied values only when needed for the first time.
-     *
-     * @param key               key with which the resulting value is to be associated.
-     * @param value             supplier of the value to use if absent (required, non-{@code null}).
-     * @param remappingFunction the function to recompute a value if present.
-     * @return the new lazy value associated with the specified key.
-     * @throws NullPointerException if {@code value} is {@code null} (via {@link Lazy#of(Supplier)}).
-     */
-    public Lazy<V> mergeLazy(K key, Supplier<V> value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-        return delegate.merge(key, Lazy.of(value), (v1, v2) -> Lazy.of(() -> remappingFunction.apply(getNullSafe(v1), getNullSafe(v2))));
+        return getNullSafe(lazyMerge(key, Lazy.eager(value), remappingFunction));
     }
 
     /**
