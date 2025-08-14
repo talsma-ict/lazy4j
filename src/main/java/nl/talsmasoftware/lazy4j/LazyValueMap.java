@@ -488,6 +488,25 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
     }
 
     /**
+     * Calculate the hashcode for this map.
+     *
+     * @return The hashcode for this map.
+     * @implNote To comply with the general {@link Map} contract, unfortunately this involves eagerly
+     * evaluating <strong>all</strong> lazy values currently contained in the map.
+     */
+    @Override
+    public int hashCode() {
+        // Calculate hashcode for our entries.
+        // Unfortunately this will involve eagerly evaluating all lazy values.
+        return super.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return delegate.toString();
+    }
+
+    /**
      * EntrySet that exposes {@code Map.Entry<K,V>} views while delegating to an underlying
      * {@code Set<Entry<K, Lazy<V>>>}. Values are evaluated on access only where required.
      *
@@ -556,6 +575,44 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
         @Override
         public V setValue(V value) {
             return getIfAvailableElseNull(delegateEntry.setValue(Lazy.eager(value)));
+        }
+
+        /**
+         * Calculates the hashcode for this entry.
+         *
+         * @return The hashcode for this entry.
+         * @implNote This implementation is based on the {@link Map.Entry#hashCode()} contract.
+         * Unfortunately, that involves eagerly evaluating the value if it has not been evaluated yet.
+         */
+        @Override
+        public int hashCode() {
+            K key = getKey();
+            V value = getValue();
+            return (key == null ? 0 : key.hashCode()) ^ (value == null ? 0 : value.hashCode());
+        }
+
+        /**
+         * Compares this lazy entry to another object.
+         *
+         * @param other object to be compared for equality with this map entry
+         * @return whether the other object is also a map entry with equal keys and values.
+         */
+        @Override
+        public boolean equals(Object other) {
+            return this == other || (other instanceof Entry
+                    && Objects.equals(getKey(), ((Entry<?, ?>) other).getKey())
+                    && Objects.equals(getValue(), ((Entry<?, ?>) other).getValue()));
+        }
+
+        /**
+         * The string representation of lazy entries will <em>not</em> eagerly evaluate the underlying lazy value.
+         * Instead, the string representation of entry in the underlying map is returned.
+         *
+         * @return The string representation of the underlying entry.
+         */
+        @Override
+        public String toString() {
+            return delegateEntry.toString();
         }
     }
 

@@ -17,8 +17,10 @@ package nl.talsmasoftware.lazy4j;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -589,5 +591,43 @@ class LazyValueMapTest {
         assertThat(newLazy.isAvailable()).isTrue();
         assertThat(previousLazy.isAvailable()).isTrue();
         assertThat(subject.get("key")).isEqualTo("oldValuenewValue");
+    }
+
+    @Test
+    void equals_otherMap() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        subject.putLazy("key", () -> "value");
+
+        Map<String, String> otherMap = new TreeMap<>();
+        otherMap.put("key", "value");
+
+        assertThat(subject).isEqualTo(otherMap);
+        assertThat(otherMap).isEqualTo(subject);
+        assertThat(subject.getLazy("key").isAvailable()).isTrue();
+    }
+
+    @Test
+    void hashCode_sameAsOtherMaps() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        subject.putLazy("key", () -> "value");
+
+        Map<String, String> otherMap = new HashMap<>();
+        otherMap.put("key", "value");
+
+        assertThat(subject).hasSameHashCodeAs(otherMap);
+        assertThat(subject.getLazy("key").isAvailable()).isTrue();
+    }
+
+    @Test
+    void toString_lazyValues() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        subject.putLazy("key", () -> "value");
+
+        assertThat(subject.toString()).isEqualTo("{key=Lazy.unresolved}");
+        assertThat(subject.getLazy("key").isAvailable()).isFalse();
+
+        subject.get("key");
+        assertThat(subject.toString()).isEqualTo("{key=Lazy[value]}");
+        assertThat(subject.getLazy("key").isAvailable()).isTrue();
     }
 }
