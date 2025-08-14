@@ -17,12 +17,45 @@ package nl.talsmasoftware.lazy4j;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LazyValueMapTest {
+    @Test
+    void copyConstructor_eager() {
+        Map<String, String> toCopy = new LinkedHashMap<>();
+        toCopy.put("key1", "value1");
+        toCopy.put("key2", "value2");
+
+        LazyValueMap<String, String> subject = new LazyValueMap<>(toCopy);
+
+        for (Lazy<String> value : subject.lazyValues()) {
+            assertThat(value.isAvailable()).isTrue(); // All values were eagerly evaluated.
+        }
+    }
+
+    @Test
+    void copyConstructor_lazy() {
+        LazyValueMap<String, String> toCopy = new LazyValueMap<>();
+        toCopy.putLazy("key1", () -> "value1");
+        toCopy.putLazy("key2", () -> "value2");
+
+        LazyValueMap<String, String> subject = new LazyValueMap<>(toCopy);
+
+        for (Lazy<String> value : subject.lazyValues()) {
+            assertThat(value.isAvailable()).isFalse(); // No lazy values were eagerly evaluated.
+        }
+        for (Lazy<String> value : toCopy.lazyValues()) {
+            assertThat(value.isAvailable()).isFalse(); // Neither in the source map.
+        }
+
+        assertThat(subject.get("key2")).isEqualTo("value2");
+        assertThat(toCopy.getLazy("key2").isAvailable()).isTrue();
+    }
+
     @Test
     void entrySet_emptyMap() {
         assertThat(new LazyValueMap<>().entrySet()).isEmpty();
