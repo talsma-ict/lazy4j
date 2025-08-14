@@ -110,34 +110,6 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
     }
 
     /**
-     * Gets the value for the specified key, if it is already available.
-     *
-     * <p>
-     * Will return the evaluated value if:
-     * <ol>
-     *     <li>The map contains a lazy value for the specified key that has already been evaluated and is not {@code null}.
-     * </ol>
-     *
-     * <p>
-     * Will return {@link Optional#empty()} if:
-     * <ol>
-     *     <li>The map does not contain the specified key.
-     *     <li>The map contains a lazy value for the specified key that has not been evaluated yet.
-     *     <li>The map contains an evaluated value that is {@code null}.
-     * </ol>
-     *
-     * <p>
-     * Note that this method will <em>not</em> force the mapped value to be evaluated.
-     *
-     * @param key The key to get the value for, if already available.
-     * @return The value for the specified key, if already available, otherwise {@link Optional#empty()}.
-     * @see Lazy#getIfAvailable()
-     */
-    public Optional<V> getIfAvailable(K key) {
-        return Optional.ofNullable(getIfAvailableElseNull(getLazy(key)));
-    }
-
-    /**
      * Gets the value for the specified key, forcing the lazy value to be evaluated if necessary.
      *
      * @param key the key whose associated value is to be returned

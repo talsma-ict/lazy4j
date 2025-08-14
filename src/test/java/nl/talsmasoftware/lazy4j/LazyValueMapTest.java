@@ -127,43 +127,6 @@ class LazyValueMapTest {
     }
 
     @Test
-    void getIfAvailable_emptyMap() {
-        assertThat(new LazyValueMap<>().getIfAvailable("key")).isEmpty();
-    }
-
-    @Test
-    void getIfAvailable_notYetEvaluated() {
-        Lazy<String> lazy = Lazy.of(() -> "test");
-        LazyValueMap<String, String> subject = new LazyValueMap<>();
-        subject.putLazy("key", lazy);
-
-        assertThat(subject.getIfAvailable("key")).isEmpty();
-        assertThat(lazy.isAvailable()).isFalse();
-    }
-
-    @Test
-    void getIfAvailable_evaluatedValueNull() {
-        Lazy<String> lazy = Lazy.eager(null);
-        LazyValueMap<String, String> subject = new LazyValueMap<>();
-        subject.putLazy("key", lazy);
-
-        assertThat(subject.getIfAvailable("key")).isEmpty();
-        assertThat(lazy.isAvailable()).isTrue();
-    }
-
-    @Test
-    void getIfAvailable() {
-        Lazy<String> lazy = Lazy.of(() -> "test");
-        LazyValueMap<String, String> subject = new LazyValueMap<>();
-        subject.putLazy("key", lazy);
-
-        assertThat(subject.getIfAvailable("key")).isEmpty();
-        assertThat(subject.get("key")).isEqualTo("test");
-        assertThat(subject.getIfAvailable("key")).contains("test");
-        assertThat(lazy.isAvailable()).isTrue();
-    }
-
-    @Test
     void get_emptyMap() {
         assertThat(new LazyValueMap<>().get("key")).isNull();
     }
@@ -184,7 +147,7 @@ class LazyValueMapTest {
 
         String result = subject.put("key", "test");
         assertThat(result).isNull();
-        assertThat(subject.getIfAvailable("key")).contains("test");
+        assertThat(subject.getLazy("key").getIfAvailable()).contains("test");
     }
 
     @Test
@@ -196,7 +159,7 @@ class LazyValueMapTest {
         String result = subject.put("key", "new");
         assertThat(result).isNull();
         assertThat(previousLazyValue.isAvailable()).isFalse();
-        assertThat(subject.getIfAvailable("key")).contains("new");
+        assertThat(subject.getLazy("key").getIfAvailable()).contains("new");
     }
 
     @Test
@@ -206,7 +169,7 @@ class LazyValueMapTest {
 
         String result = subject.put("key", "new");
         assertThat(result).isEqualTo("old");
-        assertThat(subject.getIfAvailable("key")).contains("new");
+        assertThat(subject.getLazy("key").getIfAvailable()).contains("new");
     }
 
     @Test
@@ -217,7 +180,7 @@ class LazyValueMapTest {
         Lazy<String> result = subject.putLazy("key", lazy);
         assertThat(result).isNull();
         assertThat(lazy.isAvailable()).isFalse();
-        assertThat(subject.getIfAvailable("key")).isEmpty();
+        assertThat(subject.getLazy("key").getIfAvailable()).isEmpty();
         assertThat(subject.get("key")).isEqualTo("test");
     }
 
