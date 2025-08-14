@@ -223,13 +223,13 @@ class LazyTest {
 
     @Test
     void testToString_unresolved() {
-        assertThat(mayonaise).hasToString("Lazy[not yet resolved]");
+        assertThat(mayonaise).hasToString("Lazy.unresolved");
         assertThat(counter.get()).isZero();
     }
 
     @Test
     void testToString_unresolved_exception() {
-        assertThat(exception).hasToString("Lazy[not yet resolved]");
+        assertThat(exception).hasToString("Lazy.unresolved");
         assertThat(counter.get()).isZero();
     }
 
@@ -254,12 +254,12 @@ class LazyTest {
     @Test
     void testToString_unresolved_due_to_exception() {
         resolve(exception);
-        assertThat(exception).hasToString("Lazy[not yet resolved]");
+        assertThat(exception).hasToString("Lazy.unresolved");
         assertThat(exception.isAvailable()).isFalse();
         assertThat(counter.get()).isOne();
 
         resolve(exception);
-        assertThat(exception).hasToString("Lazy[not yet resolved]");
+        assertThat(exception).hasToString("Lazy.unresolved");
         assertThat(exception.isAvailable()).isFalse();
         assertThat(counter.get()).isEqualTo(2);
     }

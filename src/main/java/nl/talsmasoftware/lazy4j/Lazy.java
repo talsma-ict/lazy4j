@@ -39,7 +39,7 @@ import static java.util.Objects.requireNonNull;
  * the supplier gets called either <em>never</em> or <em>once</em>.
  *
  * <p>
- * There is one exception to this rule; if a RuntimeException is thrown
+ * There is one exception to this rule; if a RuntimeException is thrown,
  * the value is re-evaluated until the result is obtained without an exception.
  *
  * @param <T> The type that is lazily evaluated.
@@ -247,8 +247,8 @@ public final class Lazy<T> implements Supplier<T> {
     /**
      * String representation of this lazy object.
      * <ul>
-     * <li>{@code "Lazy[not yet resolved]"} if the value was not yet resolved.
-     * <li>{@code "Lazy[<value>]"} if the value was already resolved,
+     * <li>{@code "Lazy.unresolved"} if the value was not yet resolved.
+     * <li>{@code "Lazy[value]"} if the value was already resolved,
      * where {@code <value>} is equivalent to {@code Objects.toString(Lazy.get())}.
      * </ul>
      *
@@ -256,7 +256,7 @@ public final class Lazy<T> implements Supplier<T> {
      */
     @Override
     public String toString() {
-        return getClass().getSimpleName() + (isAvailable() ? "[" + get() + ']' : "[not yet resolved]");
+        return isAvailable() ? "Lazy[" + get() + ']' : "Lazy.unresolved";
     }
 
     /**
