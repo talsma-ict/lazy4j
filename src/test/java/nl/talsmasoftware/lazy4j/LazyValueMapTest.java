@@ -113,7 +113,7 @@ class LazyValueMapTest {
     }
 
     @Test
-    void put_existingValueAlreadyEvaluated() {
+    void put_availableExistingValue() {
         LazyValueMap<String, String> subject = new LazyValueMap<>();
         subject.put("key", "old");
 
@@ -122,4 +122,95 @@ class LazyValueMapTest {
         assertThat(subject.getIfAvailable("key")).contains("new");
     }
 
+    @Test
+    void putLazy_emtpyMap() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        Lazy<String> lazy = Lazy.of(() -> "test");
+
+        Lazy<String> result = subject.putLazy("key", lazy);
+        assertThat(result).isNull();
+        assertThat(lazy.isAvailable()).isFalse();
+        assertThat(subject.getIfAvailable("key")).isEmpty();
+        assertThat(subject.get("key")).isEqualTo("test");
+    }
+
+    @Test
+    void putLazy_existingValueNotYetAvailable() {
+        Lazy<String> previousLazy = Lazy.of(() -> "old");
+        Lazy<String> newLazy = Lazy.of(() -> "new");
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        subject.putLazy("key", previousLazy);
+
+        Lazy<String> result = subject.putLazy("key", newLazy);
+        assertThat(previousLazy.isAvailable()).isFalse();
+        assertThat(newLazy.isAvailable()).isFalse();
+        assertThat(result.isAvailable()).isFalse();
+
+        assertThat(result.get()).isEqualTo("old");
+        assertThat(previousLazy.isAvailable()).isTrue();
+        assertThat(newLazy.isAvailable()).isFalse();
+        assertThat(result.isAvailable()).isTrue();
+
+        assertThat(subject.get("key")).isEqualTo("new");
+        assertThat(newLazy.isAvailable()).isTrue();
+    }
+
+    @Test
+    void putLazy_existingValueAlreadyAvailable() {
+        Lazy<String> newLazy = Lazy.of(() -> "new");
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        subject.put("key", "old");
+
+        Lazy<String> result = subject.putLazy("key", newLazy);
+        assertThat(newLazy.isAvailable()).isFalse();
+        assertThat(result.isAvailable()).isTrue();
+
+        assertThat(subject.get("key")).isEqualTo("new");
+        assertThat(newLazy.isAvailable()).isTrue();
+    }
+
+    @Test
+    void containsValue_emptyMap() {
+        assertThat(new LazyValueMap<>().containsValue("test")).isFalse();
+    }
+
+    @Test
+    void containsValue() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        subject.putLazy("key1", () -> "lazy1");
+        subject.put("eager", "eager");
+        subject.putLazy("key2", () -> "lazy2");
+
+        // First pass; check available values, leaving lazy values alone.
+        assertThat(subject.containsValue("eager")).isTrue();
+
+        assertThat(subject.getLazy("key1").isAvailable()).isFalse();
+        assertThat(subject.getLazy("key2").isAvailable()).isFalse();
+
+        // Second pass; check lazy values, stopping when the first entry is found.
+        assertThat(subject.containsValue("lazy1")).isTrue();
+        assertThat(subject.getLazy("key1").isAvailable()).isTrue();
+        assertThat(subject.getLazy("key2").isAvailable()).isFalse();
+
+        // Searching for non-existing value requires eager evaluation of all values.
+        assertThat(subject.containsValue("lazy3")).isFalse();
+        assertThat(subject.getLazy("key2").isAvailable()).isTrue();
+    }
+
+    @Test
+    void containsValue_firstPassMemoryIsLimited() {
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        for (int i = 1; i < 100000; i++) {
+            subject.putLazy("key" + i, () -> "lazy value");
+        }
+        subject.put("eager", "eager value");
+
+        assertThat(subject.containsValue("eager value")).isTrue();
+        for (int i = 1; i < 100000; i++) {
+            assertThat(subject.getLazy("key" + i).isAvailable()).isFalse();
+        }
+
+        assertThat(subject.containsValue("does not occur")).isFalse();
+        subject.lazyValues().stream().forEach(value -> assertThat(value.isAvailable()).isTrue());
+    }
 }
