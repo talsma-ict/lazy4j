@@ -491,16 +491,39 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * Calculate the hashcode for this map.
      *
      * @return The hashcode for this map.
-     * @implNote To comply with the general {@link Map} contract, unfortunately this involves eagerly
-     * evaluating <strong>all</strong> lazy values currently contained in the map.
+     * @implNote To comply with the general {@link Map} contract,
+     * this involves eagerly evaluating <strong>all</strong> lazy values currently contained in the map.
      */
     @Override
     public int hashCode() {
-        // Calculate hashcode for our entries.
-        // Unfortunately this will involve eagerly evaluating all lazy values.
+        // Calculate hashcode for actual entries, not the delegate's (lazy) entries.
         return super.hashCode();
     }
 
+    /**
+     * Determine equality for this map.
+     *
+     * @param o object to be compared for equality with this map
+     * @return Whether the specified object is another map containing the same mappings as this map.
+     * @implNote To comply with the general {@link Map} contract,
+     * this involves eagerly evaluating lazy values until one is encountered that is not contained in the other map.
+     * Therefore, if the map is found to be equal, <em>all</em> its lazy entries will have been eagerly evaluated.
+     */
+    @Override
+    public boolean equals(Object o) {
+        // Determine equality according to the general contract of Map.
+        return super.equals(o);
+    }
+
+    /**
+     * String representation of this map.
+     *
+     * <p>
+     * All values are represented by their {@link Lazy#toString()} representation.
+     * This prevents unnecessary eager evaluation of values by calling {@code LazyValueMap.toString()}.
+     *
+     * @return Standard map representation of keys and lazy values.
+     */
     @Override
     public String toString() {
         return delegate.toString();

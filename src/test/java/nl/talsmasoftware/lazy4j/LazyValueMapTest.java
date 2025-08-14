@@ -17,6 +17,7 @@ package nl.talsmasoftware.lazy4j;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -610,9 +611,11 @@ class LazyValueMapTest {
     void hashCode_sameAsOtherMaps() {
         LazyValueMap<String, String> subject = new LazyValueMap<>();
         subject.putLazy("key", () -> "value");
+        subject.putLazy(null, () -> null);
 
         Map<String, String> otherMap = new HashMap<>();
         otherMap.put("key", "value");
+        otherMap.put(null, null);
 
         assertThat(subject).hasSameHashCodeAs(otherMap);
         assertThat(subject.getLazy("key").isAvailable()).isTrue();
@@ -629,5 +632,46 @@ class LazyValueMapTest {
         subject.get("key");
         assertThat(subject.toString()).isEqualTo("{key=Lazy[value]}");
         assertThat(subject.getLazy("key").isAvailable()).isTrue();
+    }
+
+    @Test
+    void entryHashCode() {
+        LazyValueMap<String, String> lazyMap = new LazyValueMap<>();
+        lazyMap.putLazy("key", () -> "value");
+
+        Map.Entry<String, String> subject = lazyMap.entrySet().iterator().next();
+
+        assertThat(subject.hashCode()).isEqualTo(Collections.singletonMap("key", "value").hashCode());
+    }
+
+    @Test
+    void entryEquals() {
+        LazyValueMap<String, String> lazyMap = new LazyValueMap<>();
+        lazyMap.putLazy("key", () -> "value");
+
+        Map.Entry<String, String> subject = lazyMap.entrySet().iterator().next();
+        Map.Entry<String, String> other = Collections.singletonMap("key", "value").entrySet().iterator().next();
+
+        assertThat(subject).isEqualTo(subject);
+        assertThat(subject).isEqualTo(other);
+        assertThat(other).isEqualTo(subject);
+        assertThat(subject).isNotEqualTo(null);
+        assertThat(subject).isNotEqualTo("key=value");
+        assertThat(subject).isNotEqualTo(Collections.singletonMap("other", "value").entrySet().iterator().next());
+        assertThat(subject).isNotEqualTo(Collections.singletonMap("key", "other").entrySet().iterator().next());
+    }
+
+    @Test
+    void entryToString() {
+        LazyValueMap<String, String> lazyMap = new LazyValueMap<>();
+        lazyMap.putLazy("key", () -> "value");
+
+        // toString unresolved.
+        Map.Entry<String, String> subject = lazyMap.entrySet().iterator().next();
+        assertThat(subject).hasToString("key=Lazy.unresolved");
+
+        // toString resolved.
+        subject.getValue();
+        assertThat(subject).hasToString("key=Lazy[value]");
     }
 }
