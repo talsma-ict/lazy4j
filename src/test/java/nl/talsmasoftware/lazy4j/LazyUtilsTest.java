@@ -17,9 +17,24 @@ package nl.talsmasoftware.lazy4j;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LazyUtilsTest {
+    @Test
+    void verifyUnsupportedConstructor() throws NoSuchMethodException {
+        Constructor<LazyUtils> constructor = LazyUtils.class.getDeclaredConstructor();
+        constructor.setAccessible(true);
+
+        assertThatThrownBy(constructor::newInstance)
+                .isInstanceOf(InvocationTargetException.class)
+                .cause()
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
     @Test
     void getNullSafe_null() {
         assertThat(LazyUtils.getNullSafe((Lazy<String>) null)).isNull();
