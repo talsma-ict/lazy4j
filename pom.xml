@@ -196,6 +196,18 @@
                                 <artifactId>umldoclet</artifactId>
                                 <version>${umldoclet.version}</version>
                             </docletArtifact>
+                            <tags>
+                                <tag>
+                                    <name>implNote</name>
+                                    <placement>a</placement>
+                                    <head>Implementation Note:</head>
+                                </tag>
+                                <tag>
+                                    <name>implSpec</name>
+                                    <placement>a</placement>
+                                    <head>Implementation Requirements:</head>
+                                </tag>
+                            </tags>
                         </configuration>
                     </execution>
                 </executions>
