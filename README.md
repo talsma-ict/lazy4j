@@ -17,17 +17,18 @@ remembering the result so it does not need to get called again.
 
 ### LazyValueMap
 
-Map that can stores values as `Lazy` values.
+Map that stores values as `Lazy` values.
 
 ## Why?
 
 We feel this ought to be provided out of the box and should have been when lambda's were introduced, back in Java 8.
 
-Fortunately, a `Lazy` class implementation is not very difficult to create, so that's what we did.
+Fortunately, a `Lazy` class implementation is not very difficult to create, so that's what we did.  
+The `LazyValueMap` was added later in version 2.0.2.
 
 ## Example
 
-A small example of how this class can be used:
+A small example of how the `Lazy` class can be used:
 
 ```java
 public class Example {
@@ -50,6 +51,18 @@ Lazy provides the following methods:
 - `ifAvailable` runs a function only if the lazy value is already available.
 
 Please refer to the [Lazy class documentation][lazy-javadoc-page] for full descriptions.
+
+### LazyValueMap example
+
+```java
+    // Map that stores lazy values that only get evaluated when they are needed for the first time.
+    private final LazyValueMap<String, String> lazyMap = new LazyValueMap(HashMap::new);
+    private final LazyValueMap<String, String> sortedLazyMap = new LazyValueMap(TreeMap::new);
+
+    lazyMap.putLazy("key", () -> new Expensive());
+```
+
+The expensive value is only evaluated when the key is first accessed.
 
 ## Getting the class
 
