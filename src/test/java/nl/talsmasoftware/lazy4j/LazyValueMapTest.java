@@ -55,7 +55,7 @@ class LazyValueMapTest {
             assertThat(value.isAvailable()).isFalse(); // Neither in the source map.
         }
 
-        assertThat(subject.get("key2")).isEqualTo("value2");
+        assertThat(subject).containsEntry("key2", "value2"); // trigger evaluation.
         assertThat(toCopy.getLazy("key2").isAvailable()).isTrue();
     }
 
@@ -74,7 +74,7 @@ class LazyValueMapTest {
         subject.entrySet().clear();
 
         assertThat(subject.entrySet()).isEmpty();
-        assertThat(subject.isEmpty());
+        assertThat(subject).isEmpty();
         assertThat(lazy.isAvailable()).isFalse();
     }
 
@@ -117,14 +117,14 @@ class LazyValueMapTest {
             assertThat(entry.setValue("other")).isNull(); // lazy was not yet available.
         }
         assertThat(subject.getLazy("key").isAvailable()).isTrue();
-        assertThat(subject.get("key")).isEqualTo("other");
+        assertThat(subject).containsEntry("key", "other");
 
         assertThat(subject.entrySet()).hasSize(1);
         for (Map.Entry<String, String> entry : subject.entrySet()) {
             assertThat(entry.setValue("yet another")).isEqualTo("other");
         }
         assertThat(subject.getLazy("key").isAvailable()).isTrue();
-        assertThat(subject.get("key")).isEqualTo("yet another");
+        assertThat(subject).containsEntry("key", "yet another");
 
         assertThat(lazy.isAvailable()).isFalse(); // No eager evaluation of lazy value.
     }
@@ -140,8 +140,11 @@ class LazyValueMapTest {
         LazyValueMap<String, String> subject = new LazyValueMap<>();
         subject.putLazy("key", lazy);
 
-        assertThat(subject.get("key")).isEqualTo("test");
+        assertThat(lazy.isAvailable()).isFalse();
+        subject.get("key");
         assertThat(lazy.isAvailable()).isTrue();
+
+        assertThat(subject).containsEntry("key", "test");
     }
 
     @Test
@@ -184,7 +187,7 @@ class LazyValueMapTest {
         assertThat(result).isNull();
         assertThat(lazy.isAvailable()).isFalse();
         assertThat(subject.getLazy("key").getIfAvailable()).isEmpty();
-        assertThat(subject.get("key")).isEqualTo("test");
+        assertThat(subject).containsEntry("key", "test");
     }
 
     @Test
@@ -204,8 +207,9 @@ class LazyValueMapTest {
         assertThat(newLazy.isAvailable()).isFalse();
         assertThat(result.isAvailable()).isTrue();
 
-        assertThat(subject.get("key")).isEqualTo("new");
+        subject.get("key");
         assertThat(newLazy.isAvailable()).isTrue();
+        assertThat(subject).containsEntry("key", "new");
     }
 
     @Test
@@ -218,8 +222,9 @@ class LazyValueMapTest {
         assertThat(newLazy.isAvailable()).isFalse();
         assertThat(result.isAvailable()).isTrue();
 
-        assertThat(subject.get("key")).isEqualTo("new");
+        subject.get("key");
         assertThat(newLazy.isAvailable()).isTrue();
+        assertThat(subject).containsEntry("key", "new");
     }
 
     @Test
@@ -235,18 +240,18 @@ class LazyValueMapTest {
         subject.putLazy("key2", () -> "lazy2");
 
         // First pass; check available values, leaving lazy values alone.
-        assertThat(subject.containsValue("eager")).isTrue();
+        assertThat(subject).containsValue("eager");
 
         assertThat(subject.getLazy("key1").isAvailable()).isFalse();
         assertThat(subject.getLazy("key2").isAvailable()).isFalse();
 
         // Second pass; check lazy values, stopping when the first entry is found.
-        assertThat(subject.containsValue("lazy1")).isTrue();
+        assertThat(subject).containsValue("lazy1");
         assertThat(subject.getLazy("key1").isAvailable()).isTrue();
         assertThat(subject.getLazy("key2").isAvailable()).isFalse();
 
         // Searching for non-existing value requires eager evaluation of all values.
-        assertThat(subject.containsValue("lazy3")).isFalse();
+        assertThat(subject).doesNotContainValue("lazy3");
         assertThat(subject.getLazy("key2").isAvailable()).isTrue();
     }
 
@@ -272,8 +277,9 @@ class LazyValueMapTest {
         LazyValueMap<String, String> subject = new LazyValueMap<>();
         subject.putLazy("key1", () -> "lazy1");
 
-        assertThat(subject.containsKey("key1")).isTrue();
-        assertThat(subject.containsKey("key2")).isFalse();
+        assertThat(subject)
+                .containsKey("key1")
+                .doesNotContainKey("key2");
         assertThat(subject.getLazy("key1").isAvailable()).isFalse();
     }
 
@@ -305,10 +311,10 @@ class LazyValueMapTest {
     void computeIfAbsent() {
         LazyValueMap<String, String> subject = new LazyValueMap<>();
         assertThat(subject.computeIfAbsent("key", k -> "value")).isEqualTo("value");
-        assertThat(subject.get("key")).isEqualTo("value");
+        assertThat(subject).containsEntry("key", "value");
 
         assertThat(subject.computeIfAbsent("key", k -> "other")).isEqualTo("value");
-        assertThat(subject.get("key")).isEqualTo("value");
+        assertThat(subject).containsEntry("key", "value");
     }
 
     @Test
@@ -320,10 +326,10 @@ class LazyValueMapTest {
             called.set(true);
             return "value";
         });
-        assertThat(subject.containsKey("key")).isTrue();
+        assertThat(subject).containsKey("key");
         assertThat(called.get()).isFalse();
 
-        assertThat(subject.get("key")).isEqualTo("value");
+        assertThat(subject).containsEntry("key", "value"); // Triggers evaluation
         assertThat(called.get()).isTrue();
     }
 
@@ -331,10 +337,10 @@ class LazyValueMapTest {
     void putIfAbsent() {
         LazyValueMap<String, String> subject = new LazyValueMap<>();
         assertThat(subject.putIfAbsent("key", "value")).isNull();
-        assertThat(subject.get("key")).isEqualTo("value");
+        assertThat(subject).containsEntry("key", "value");
 
         assertThat(subject.putIfAbsent("key", "other")).isEqualTo("value");
-        assertThat(subject.get("key")).isEqualTo("value");
+        assertThat(subject).containsEntry("key", "value");
     }
 
     @Test
@@ -348,7 +354,7 @@ class LazyValueMapTest {
         assertThat(subject.lazyPutIfAbsent("key", () -> "other").isAvailable()).isFalse();
         assertThat(lazy.isAvailable()).isFalse();
 
-        assertThat(subject.get("key")).isEqualTo("value");
+        assertThat(subject).containsEntry("key", "value"); // Triggers evaluation
         assertThat(lazy.isAvailable()).isTrue();
     }
 
@@ -364,8 +370,8 @@ class LazyValueMapTest {
         Lazy<String> lazy = Lazy.of(() -> "lazy value");
         subject.putLazy("key", lazy);
         assertThat(subject.replace("key", "other")).isNull(); // lazy value not eagerly evaluated.
-        assertThat(subject.get("key")).isEqualTo("other");
-        assertThat(lazy.isAvailable()).isFalse();
+        assertThat(subject).containsEntry("key", "other"); // trigger new entry evaluation.
+        assertThat(lazy.isAvailable()).isFalse(); // previous lazy is never eagerly evaluated.
     }
 
     @Test
@@ -380,7 +386,7 @@ class LazyValueMapTest {
         assertThat(subject.getLazy("key").isAvailable()).isFalse();
 
         assertThat(result.get()).isEqualTo("lazy value");
-        assertThat(subject.get("key")).isEqualTo("other value");
+        assertThat(subject).containsEntry("key", "other value");
     }
 
     @Test
@@ -405,9 +411,9 @@ class LazyValueMapTest {
         });
         assertThat(result).isEqualTo("value+other");
         assertThat(called.get()).isTrue();
-        assertThat(subject.containsKey("key")).isTrue();
+        assertThat(subject).containsKey("key");
         assertThat(subject.getLazy("key").isAvailable()).isTrue();
-        assertThat(subject.get("key")).isEqualTo("value+other");
+        assertThat(subject).containsEntry("key", "value+other");
     }
 
     @Test
@@ -432,10 +438,10 @@ class LazyValueMapTest {
         });
         assertThat(result.isAvailable()).isFalse();
         assertThat(called.get()).isFalse();
-        assertThat(subject.containsKey("key")).isTrue();
+        assertThat(subject).containsKey("key");
         assertThat(subject.getLazy("key").isAvailable()).isFalse();
 
-        assertThat(subject.get("key")).isEqualTo("value+other");
+        assertThat(subject).containsEntry("key", "value+other");
         assertThat(result.isAvailable()).isTrue();
         assertThat(result.get()).isEqualTo("value+other");
     }
@@ -452,9 +458,9 @@ class LazyValueMapTest {
         });
         assertThat(result).isEqualTo("null+other");
         assertThat(called.get()).isTrue();
-        assertThat(subject.containsKey("newKey")).isTrue();
+        assertThat(subject).containsKey("newKey");
         assertThat(subject.getLazy("newKey").isAvailable()).isTrue();
-        assertThat(subject.get("newKey")).isEqualTo("null+other");
+        assertThat(subject).containsEntry("newKey", "null+other");
 
         // Existing value
         subject.putLazy("key", () -> "value");
@@ -465,9 +471,9 @@ class LazyValueMapTest {
         });
         assertThat(result).isEqualTo("value+other");
         assertThat(called.get()).isTrue();
-        assertThat(subject.containsKey("key")).isTrue();
+        assertThat(subject).containsKey("key");
         assertThat(subject.getLazy("key").isAvailable()).isTrue();
-        assertThat(subject.get("key")).isEqualTo("value+other");
+        assertThat(subject).containsEntry("key", "value+other");
     }
 
     @Test
@@ -482,9 +488,9 @@ class LazyValueMapTest {
         });
         assertThat(result.isAvailable()).isFalse();
         assertThat(called.get()).isFalse();
-        assertThat(subject.containsKey("newKey")).isTrue();
+        assertThat(subject).containsKey("newKey");
         assertThat(subject.getLazy("newKey").isAvailable()).isFalse();
-        assertThat(subject.get("newKey")).isEqualTo("null+other");
+        assertThat(subject).containsEntry("newKey", "null+other");
 
         // Existing value
         subject.putLazy("key", () -> "value");
@@ -495,9 +501,9 @@ class LazyValueMapTest {
         });
         assertThat(result.isAvailable()).isFalse();
         assertThat(called.get()).isFalse();
-        assertThat(subject.containsKey("key")).isTrue();
+        assertThat(subject).containsKey("key");
         assertThat(subject.getLazy("key").isAvailable()).isFalse();
-        assertThat(subject.get("key")).isEqualTo("value+other");
+        assertThat(subject).containsEntry("key", "value+other");
     }
 
     @Test
@@ -512,9 +518,9 @@ class LazyValueMapTest {
         });
         assertThat(result).isEqualTo("newValue");
         assertThat(called.get()).isFalse();
-        assertThat(subject.containsKey("newKey")).isTrue();
+        assertThat(subject).containsKey("newKey");
         assertThat(subject.getLazy("newKey").isAvailable()).isTrue();
-        assertThat(subject.get("newKey")).isEqualTo("newValue");
+        assertThat(subject).containsEntry("newKey", "newValue");
 
         // Existing lazy value
         subject.putLazy("key", () -> "oldValue");
@@ -525,9 +531,9 @@ class LazyValueMapTest {
         });
         assertThat(result).isEqualTo("oldValuenewValue");
         assertThat(called.get()).isTrue();
-        assertThat(subject.containsKey("key")).isTrue();
+        assertThat(subject).containsKey("key");
         assertThat(subject.getLazy("key").isAvailable()).isTrue();
-        assertThat(subject.get("key")).isEqualTo("oldValuenewValue");
+        assertThat(subject).containsEntry("key", "oldValuenewValue");
     }
 
     @Test
@@ -539,12 +545,12 @@ class LazyValueMapTest {
             called.set(true);
             return v1 + v2;
         });
-        assertThat(subject.containsKey("newKey")).isTrue();
+        assertThat(subject).containsKey("newKey");
         assertThat(called.get()).isFalse();
         assertThat(result.isAvailable()).isFalse();
         assertThat(subject.getLazy("newKey").isAvailable()).isFalse();
 
-        assertThat(subject.get("newKey")).isEqualTo("newValue");
+        assertThat(subject).containsEntry("newKey", "newValue");
         assertThat(result.isAvailable()).isTrue();
         assertThat(called.get()).isFalse();
     }
@@ -562,7 +568,7 @@ class LazyValueMapTest {
             return v1 + v2;
         });
         // Merge is not performed until the lazy value is accessed.
-        assertThat(subject.containsKey("key")).isTrue();
+        assertThat(subject).containsKey("key");
         assertThat(called.get()).isFalse();
         assertThat(result.isAvailable()).isFalse();
         assertThat(newLazy.isAvailable()).isFalse();
@@ -574,7 +580,7 @@ class LazyValueMapTest {
         assertThat(subject.getLazy("key").isAvailable()).isTrue();
         assertThat(newLazy.isAvailable()).isTrue();
         assertThat(previousLazy.isAvailable()).isTrue();
-        assertThat(subject.get("key")).isEqualTo("oldValuenewValue");
+        assertThat(subject).containsEntry("key", "oldValuenewValue");
     }
 
     @Test
@@ -609,11 +615,11 @@ class LazyValueMapTest {
         LazyValueMap<String, String> subject = new LazyValueMap<>();
         subject.putLazy("key", () -> "value");
 
-        assertThat(subject.toString()).isEqualTo("{key=Lazy.unresolved}");
+        assertThat(subject).hasToString("{key=Lazy.unresolved}");
         assertThat(subject.getLazy("key").isAvailable()).isFalse();
 
         subject.get("key");
-        assertThat(subject.toString()).isEqualTo("{key=Lazy[value]}");
+        assertThat(subject).hasToString("{key=Lazy[value]}");
         assertThat(subject.getLazy("key").isAvailable()).isTrue();
     }
 
@@ -624,7 +630,10 @@ class LazyValueMapTest {
 
         Map.Entry<String, String> subject = lazyMap.entrySet().iterator().next();
 
-        assertThat(subject.hashCode()).isEqualTo(Collections.singletonMap("key", "value").hashCode());
+        assertThat(subject)
+                .hasSameHashCodeAs(subject)
+                .hasSameHashCodeAs(Collections.singletonMap("key", "value").entrySet().iterator().next())
+                .hasSameHashCodeAs(Collections.singletonMap("key", "value"));
     }
 
     @Test
@@ -635,13 +644,14 @@ class LazyValueMapTest {
         Map.Entry<String, String> subject = lazyMap.entrySet().iterator().next();
         Map.Entry<String, String> other = Collections.singletonMap("key", "value").entrySet().iterator().next();
 
-        assertThat(subject).isEqualTo(subject);
-        assertThat(subject).isEqualTo(other);
+        assertThat(subject)
+                .isEqualTo(subject)
+                .isEqualTo(other)
+                .isNotEqualTo(null)
+                .isNotEqualTo("key=value")
+                .isNotEqualTo(Collections.singletonMap("other", "value").entrySet().iterator().next())
+                .isNotEqualTo(Collections.singletonMap("key", "other").entrySet().iterator().next());
         assertThat(other).isEqualTo(subject);
-        assertThat(subject).isNotEqualTo(null);
-        assertThat(subject).isNotEqualTo("key=value");
-        assertThat(subject).isNotEqualTo(Collections.singletonMap("other", "value").entrySet().iterator().next());
-        assertThat(subject).isNotEqualTo(Collections.singletonMap("key", "other").entrySet().iterator().next());
     }
 
     @Test
