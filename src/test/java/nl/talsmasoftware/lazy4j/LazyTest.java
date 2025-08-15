@@ -265,6 +265,28 @@ class LazyTest {
     }
 
     @Test
+    void testHashCode() {
+        assertThat(Lazy.eager(null)).hasSameHashCodeAs(Lazy.of(() -> null));
+        assertThat(Lazy.eager("Some value!")).hasSameHashCodeAs(Lazy.of(() -> "Some value!"));
+        assertThat(Lazy.of(() -> "Some value!")).hasSameHashCodeAs("Some value!");
+    }
+
+    @Test
+    void testEquals() {
+        assertThat(Lazy.eager(null)).isEqualTo(Lazy.of(() -> null)).isNotEqualTo(null);
+        assertThat(Lazy.of(() -> null)).isEqualTo(Lazy.eager(null))
+                .isNotEqualTo(Lazy.of(() -> "")).isNotEqualTo(null);
+
+        Lazy<String> lazy = Lazy.of(() -> "Some value!");
+        assertThat(lazy)
+                .isEqualTo(Lazy.of(lazy))
+                .isEqualTo(Lazy.of(() -> "Some value!"))
+                .isEqualTo(Lazy.eager("Some value!"))
+                .isNotEqualTo(Lazy.of(() -> "Some other value!"))
+                .isNotEqualTo("Some value!");
+    }
+
+    @Test
     @SuppressWarnings("deprecation")
     void testDeprecatedFactoryMethod() {
         Lazy<String> lazyString = Lazy.lazy(mayonaise);

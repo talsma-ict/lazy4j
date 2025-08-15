@@ -15,6 +15,7 @@
  */
 package nl.talsmasoftware.lazy4j;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -242,6 +243,34 @@ public final class Lazy<T> implements Supplier<T> {
     public <U> Lazy<U> flatMap(Function<? super T, ? extends Supplier<? extends U>> mapper) {
         requireNonNull(mapper, "Mapper function is <null>.");
         return Lazy.of(() -> requireNonNull(mapper.apply(get()), "Lazy mapper returned <null> supplier.").get());
+    }
+
+    /**
+     * Hashcode of this lazy object.
+     *
+     * <p>
+     * <strong>Note:</strong> This eagerly evaluates the lazy value if necessary.
+     *
+     * @return The hashcode of this object.
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(get());
+    }
+
+    /**
+     * Checks equality to the other object.
+     *
+     * <p>
+     * <strong>Note:</strong> If the other object is another Lazy object instance (i.e., not {@code this}),
+     * the values of both will be eagerly evaluated if necessary.
+     *
+     * @param other the object with which to compare.
+     * @return {@code true} if this object is equal the other object, {@code false} otherwise.
+     */
+    @Override
+    public boolean equals(Object other) {
+        return this == other || (other instanceof Lazy && Objects.equals(get(), ((Lazy<?>) other).get()));
     }
 
     /**
