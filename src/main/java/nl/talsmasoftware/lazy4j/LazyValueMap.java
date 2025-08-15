@@ -278,7 +278,7 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      *
      * @param key   the key with which the specified value is to be associated.
      * @param value the new value to be associated with the specified key.
-     * @return The previous value associated with key,  or {@code null} if there was no mapping for key.
+     * @return The previous value associated with the specified key, or {@code null} if there was no mapping for the key.
      * A null result can also indicate that <strong>the previous lazy value was not yet available</strong>.
      * @implNote The returned previous mapping, if any, is <em>not</em> eagerly evaluated by this method.
      * @see #putLazy(Object, Supplier)
