@@ -5,20 +5,25 @@
 
 # Lazy4J
 
-A generic `Lazy` class in java
+- A `Lazy` class in java.
+- A `LazyValueMap`.
 
 ## What is it?
 
-A lazy function that is evaluated only when it is first needed,
-remembering the result so it does not get called again.
+### Lazy
 
-Technically, `Lazy` is a wrapper for standard Java `Supplier` functions.
+Wrapper for a standard java `Supplier` function that only evaluates the wrapped function when it is first needed,
+remembering the result so it does not need to get called again.
+
+### LazyValueMap
+
+Map that can stores values as `Lazy` values.
 
 ## Why?
 
 We feel this ought to be provided out of the box and should have been when lambda's were introduced, back in Java 8.
 
-Fortunately, it's not very difficult to create, so that's what we did.
+Fortunately, a `Lazy` class implementation is not very difficult to create, so that's what we did.
 
 ## Example
 
