@@ -251,23 +251,6 @@ class LazyValueMapTest {
     }
 
     @Test
-    void containsValue_firstPassMemoryIsLimited() {
-        LazyValueMap<String, String> subject = new LazyValueMap<>();
-        for (int i = 1; i < 100000; i++) {
-            subject.putLazy("key" + i, () -> "lazy value");
-        }
-        subject.put("eager", "eager value");
-
-        assertThat(subject.containsValue("eager value")).isTrue();
-        for (int i = 1; i < 100000; i++) {
-            assertThat(subject.getLazy("key" + i).isAvailable()).isFalse();
-        }
-
-        assertThat(subject.containsValue("does not occur")).isFalse();
-        subject.lazyValues().stream().forEach(value -> assertThat(value.isAvailable()).isTrue());
-    }
-
-    @Test
     void size_mustMatchBackingMap() {
         Map<String, Lazy<String>> backingMap = new java.util.LinkedHashMap<>();
         LazyValueMap<String, String> subject = new LazyValueMap<>(() -> backingMap);

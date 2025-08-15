@@ -15,7 +15,14 @@
  */
 package nl.talsmasoftware.lazy4j;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -32,11 +39,13 @@ import static nl.talsmasoftware.lazy4j.LazyUtils.getNullSafe;
  * unused values do not need to be evaluated.
  *
  * <p>
- * The behaviour of this map depends on the delegate map it was {@link #LazyValueMap(Supplier) initialized} with.
- * If the delegate map is mutable, the lazy map will be mutable as well.
- * If the delegate map is sorted, the lazy map will be sorted as well.
+ * The behaviour of this map depends on the delegate map it was {@link #LazyValueMap(Supplier) initialized} with.<br>
+ * If the delegate map is mutable, the lazy map will be mutable as well.<br>
+ * If the delegate map is sorted, the lazy map will be sorted as well.<br>
  * The {@link #LazyValueMap() default} and {@link #LazyValueMap(Map) copy} constructors create a lazy map
- * that behaves like a {@link LinkedHashMap}.
+ * that behaves like a {@link LinkedHashMap}.<br>
+ * If the backing map does <em>not</em> support {@code null} values, the lazy map <em>will</em> support them,
+ * because the values are wrapped in a {@link Lazy} object, therefore will never be {@code null} in the backing map.
  *
  * @param <K> The type of the keys in the map.
  * @param <V> The type of the values in the map.
@@ -292,28 +301,17 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      */
     @Override
     public boolean containsValue(Object value) {
-        // First pass, check available values.
-        List<Lazy<V>> unavailableOnFirstPass = new ArrayList<>();
+        // First pass, only check the already-available values.
+        boolean requiresSecondPass = false;
         for (Lazy<V> lazyValue : lazyValues()) {
             if (!lazyValue.isAvailable()) {
-                if (unavailableOnFirstPass != null) {
-                    if (unavailableOnFirstPass.size() < 10000) {
-                        unavailableOnFirstPass.add(lazyValue);
-                    } else { // prevent excessive memory usage.
-                        unavailableOnFirstPass = null;
-                    }
-                }
+                requiresSecondPass = true;
             } else if (Objects.equals(value, lazyValue.get())) {
                 return true;
             }
         }
-        // Second pass, check the values that were not yet available.
-        for (Lazy<V> lazyValue : unavailableOnFirstPass != null ? unavailableOnFirstPass : lazyValues()) {
-            if (Objects.equals(value, lazyValue.get())) {
-                return true;
-            }
-        }
-        return false;
+        // Second pass, also check the values that were not yet available in the first pass.
+        return requiresSecondPass && delegate.containsValue(Lazy.eager(value));
     }
 
     /**
@@ -536,6 +534,7 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * @param <K> key type.
      * @param <V> value type.
      */
+    @SuppressWarnings("java:S2160") // standard hashCode and equals behaviour is fine.
     private static class LazyEntrySet<K, V> extends AbstractSet<Entry<K, V>> {
         private final Set<Entry<K, Lazy<V>>> delegateEntrySet;
 
