@@ -64,6 +64,17 @@ Please refer to the [Lazy class documentation][lazy-javadoc-page] for full descr
 
 The expensive value is only evaluated when the key is first accessed.
 
+The lazy map offers the following lazy variants of standard map methods:
+- `getLazy`
+- `putLazy`
+- `lazyPutIfAbsent`
+- `lazyCompute`
+- `lazyComputeIfAbsent`
+- `lazyComputeIfPresent`
+- `lazyReplace`
+- `lazyMerge`
+- `lazyValues`
+
 ## Getting the class
 
 Add the following dependency to your project
