@@ -111,7 +111,7 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * @return The lazy value for the specified key, or {@code null} if the map contains no mapping for the key.
      * @see #get(Object)
      */
-    public Lazy<V> getLazy(Object key) {
+    public Lazy<V> getLazy(K key) {
         return delegate.get(key);
     }
 
@@ -265,8 +265,9 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * @see #getLazy(Object)
      */
     @Override
+    @SuppressWarnings("unchecked") // Necessary due to Map contract.
     public V get(Object key) {
-        return getNullSafe(getLazy(key));
+        return getNullSafe(getLazy((K) key));
     }
 
     /**
@@ -292,7 +293,7 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      *
      * <p>
      * This implementation performs a two-pass check to minimize unnecessary evaluations:
-     * it first inspects already available values, and only evaluates unavailable values on a second pass
+     * it first inspects already available values and only evaluates unavailable values on a second pass
      * if no match was found. This means calling this method may cause evaluation of previously
      * unavailable lazy values.
      *
@@ -368,7 +369,7 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * Returns a {@link Set} view of the keys contained in this map.
      *
      * <p>
-     * The returned set is backed by the map; changes to the set are reflected in the map, and vice-versa.
+     * The returned set is backed by the map; changes to the set are reflected in the map, and vice versa.
      *
      * @return a set view of the keys contained in this map.
      */
@@ -608,9 +609,7 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
          */
         @Override
         public int hashCode() {
-            K key = getKey();
-            V value = getValue();
-            return (key == null ? 0 : key.hashCode()) ^ (value == null ? 0 : value.hashCode());
+            return Objects.hashCode(getKey()) ^ Objects.hashCode(getValue());
         }
 
         /**
@@ -628,7 +627,7 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
 
         /**
          * The string representation of lazy entries will <em>not</em> eagerly evaluate the underlying lazy value.
-         * Instead, the string representation of entry in the underlying map is returned.
+         * Instead, the string representation of a lazy map entry in the underlying map is returned.
          *
          * @return The string representation of the underlying entry.
          */
