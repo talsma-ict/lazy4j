@@ -27,10 +27,10 @@ import java.util.function.Consumer;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toCollection;
 import static nl.talsmasoftware.lazy4j.LazyUtils.getIfAvailableElseNull;
 import static nl.talsmasoftware.lazy4j.LazyUtils.getNullSafe;
 
@@ -58,7 +58,7 @@ public class LazyList<T> extends AbstractList<T> {
      * @param toCopy The collection to copy the contents from.
      * @see #LazyList(Supplier)
      */
-    public LazyList(Collection<T> toCopy) {
+    public LazyList(Collection<? extends T> toCopy) {
         this(() -> copyToLazyList(toCopy));
     }
 
@@ -84,35 +84,70 @@ public class LazyList<T> extends AbstractList<T> {
         this.delegate = requireNonNull(listFactory.get(), "Backing list may not be <null>.");
     }
 
+    /**
+     * Returns the element at the specified position in this list as a lazy value.
+     *
+     * @param index The index of the element to return.
+     * @return The lazy value at the specified position.
+     * @see #get(int)
+     * @see #getFirstLazy()
+     * @see #getLastLazy()
+     */
     public Lazy<T> getLazy(int index) {
         return delegate.get(index);
     }
 
+    /**
+     * Returns the first element of this list as a lazy value.
+     *
+     * @return The lazy first element.
+     * @see #get(int)
+     * @see #getLazy(int)
+     * @see #getLastLazy()
+     */
     public Lazy<T> getFirstLazy() {
         return getLazy(0);
     }
 
+    /**
+     * Returns the last element of this list as a lazy value.
+     *
+     * @return The lazy last element.
+     * @see #get(int)
+     * @see #getLazy(int)
+     * @see #getFirstLazy()
+     */
     public Lazy<T> getLastLazy() {
         return getLazy(size() - 1);
     }
 
-    public Lazy<T> setLazy(int index, Supplier<T> element) {
+    /**
+     * Sets the element at the specified position in this list to the specified element.
+     *
+     * <p>
+     * The actual value of the element is only evaluated when it is needed for the first time.
+     *
+     * @param index   The index of the element to replace.
+     * @param element The supplier for the new element. The supplier will be evaluated only if necessary.
+     * @return The previous element at the specified position.
+     */
+    public Lazy<T> setLazy(int index, Supplier<? extends T> element) {
         return delegate.set(index, Lazy.of(element));
     }
 
-    public boolean addLazy(Supplier<T> lazy) {
+    public boolean addLazy(Supplier<? extends T> lazy) {
         return delegate.add(Lazy.of(lazy));
     }
 
-    public void addLazy(int index, Supplier<T> lazy) {
+    public void addLazy(int index, Supplier<? extends T> lazy) {
         delegate.add(index, Lazy.of(lazy));
     }
 
-    public void addFirstLazy(Supplier<T> lazy) {
+    public void addFirstLazy(Supplier<? extends T> lazy) {
         addLazy(0, lazy);
     }
 
-    public void addLastLazy(Supplier<T> lazy) {
+    public void addLastLazy(Supplier<? extends T> lazy) {
         addLazy(lazy);
     }
 
@@ -124,6 +159,16 @@ public class LazyList<T> extends AbstractList<T> {
         return delegate.remove(index);
     }
 
+    /**
+     * Returns the element at the specified position in this list.
+     *
+     * <p>
+     * The corresponding lazy value is evaluated if necessary.
+     *
+     * @param index index of the element to return.
+     * @return The element at the specified position.
+     * @see #getLazy(int)
+     */
     @Override
     public T get(int index) {
         return getNullSafe(getLazy(index));
@@ -147,19 +192,49 @@ public class LazyList<T> extends AbstractList<T> {
     @Override
     public boolean addAll(int index, Collection<? extends T> c) {
         return addAllLazy(index, c.stream()
-                .map(v -> (Lazy<T>) Lazy.eager(v))
-                .collect(Collectors.toCollection(ArrayList::new)));
+                .map(v -> Lazy.eager((T) v))
+                .collect(toCollection(ArrayList::new)));
     }
 
+    /**
+     * Removes the element at the specified position in this list.
+     *
+     * <p>
+     * The removed value is returned only if it had already been evaluated; otherwise {@code null} is returned
+     * without forcing evaluation.
+     *
+     * @param index the index of the element to be removed
+     * @return the removed value if present and available; otherwise {@code null}.
+     */
     @Override
     public T remove(int index) {
         return getIfAvailableElseNull(removeLazy(index));
     }
 
+    /**
+     * Removes the first element of this list.
+     *
+     * <p>
+     * The removed value is returned only if it had already been evaluated; otherwise {@code null} is returned
+     * without forcing evaluation.
+     *
+     * @return the removed value if present and available; otherwise {@code null}.
+     */
+    @SuppressWarnings("java:S1161") // Can't override, removeFirst is not yet part of the Java 8 Collections API.
     public T removeFirst() {
         return remove(0);
     }
 
+    /**
+     * Removes the last element of this list.
+     *
+     * <p>
+     * The removed value is returned only if it had already been evaluated; otherwise {@code null} is returned
+     * without forcing evaluation.
+     *
+     * @return the removed value if present and available; otherwise {@code null}.
+     */
+    @SuppressWarnings("java:S1161") // Can't override, removeLast is not yet part of the Java 8 Collections API.
     public T removeLast() {
         return remove(size() - 1);
     }
@@ -379,13 +454,18 @@ public class LazyList<T> extends AbstractList<T> {
      * @param <T>    type of the elements in the collection.
      * @return a new {@link ArrayList} containing lazy values that mirror the source contents.
      */
-    private static <T> List<Lazy<T>> copyToLazyList(Collection<T> toCopy) {
+    @SuppressWarnings("unchecked") // It is safe to cast '? extends T' to T for reading.
+    private static <T> List<Lazy<T>> copyToLazyList(Collection<? extends T> toCopy) {
         if (toCopy instanceof LazyList) { // Reuse lazy values if we can.
             return new ArrayList<>(((LazyList<T>) toCopy).delegate);
         }
 
         // Otherwise, convert the actual values to (eager) Lazy instances.
-        return toCopy.stream().map(Lazy::eager).collect(Collectors.toCollection(ArrayList::new));
+        List<Lazy<T>> copy = new ArrayList<>(toCopy.size());
+        for (T value : toCopy) {
+            copy.add(Lazy.eager(value));
+        }
+        return copy;
     }
 
     private static final class LazySpliterator<T> implements Spliterator<T> {
