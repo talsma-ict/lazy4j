@@ -68,9 +68,9 @@ public final class Lazy<T> implements Supplier<T> {
      * @return A lazy placeholder for the supplier result that will only obtain it when needed.
      * @since 2.0.1
      */
-    public static <T> Lazy<T> of(Supplier<T> supplier) {
+    public static <T> Lazy<T> of(Supplier<? extends T> supplier) {
         requireNonNull(supplier, "Lazy function is <null>.");
-        return supplier instanceof Lazy ? (Lazy<T>) supplier : new Lazy<>(supplier, null);
+        return supplier instanceof Lazy ? (Lazy<T>) supplier : new Lazy<T>((Supplier<T>) supplier, null);
     }
 
     /**
