@@ -190,7 +190,7 @@ public final class Lazy<T> implements Supplier<T> {
      * @see #isAvailable()
      * @see #getIfAvailable()
      */
-    public void ifAvailable(Consumer<T> consumer) {
+    public void ifAvailable(Consumer<? super T> consumer) {
         requireNonNull(consumer, "Consumer of lazy value is <null>");
         if (isAvailable()) consumer.accept(get());
     }
