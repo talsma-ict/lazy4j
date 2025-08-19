@@ -21,16 +21,17 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Spliterator;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toCollection;
 import static nl.talsmasoftware.lazy4j.LazyUtils.getIfAvailableElseNull;
 import static nl.talsmasoftware.lazy4j.LazyUtils.getNullSafe;
 
@@ -135,26 +136,114 @@ public class LazyList<T> extends AbstractList<T> {
         return delegate.set(index, Lazy.of(element));
     }
 
+    /**
+     * Adds the specified element to the end of this list, without eagerly evaluating it.
+     *
+     * <p>
+     * The element will be evaluated when it is needed for the first time.
+     *
+     * @param lazy The supplier for the new element, evaluated only if necessary.
+     * @return {@code true} if the element was added to the list.
+     * @throws UnsupportedOperationException if the backing list does not support adding elements.
+     */
     public boolean addLazy(Supplier<? extends T> lazy) {
         return delegate.add(Lazy.of(lazy));
     }
 
+    /**
+     * Inserts the specified element at the specified position in this list, without eagerly evaluating it.
+     *
+     * <p>
+     * Shifts the element currently at that position (if any) and any subsequent elements to the right
+     * (adds one to their indices).
+     *
+     * <p>
+     * The element will be evaluated when it is needed for the first time.
+     *
+     * @param index The index at which the specified element is to be inserted.
+     * @param lazy  The supplier for the new element, evaluated only if necessary.
+     * @throws UnsupportedOperationException if the backing list does not support adding elements.
+     * @throws IndexOutOfBoundsException     if the index is out of range (<tt>index &lt; 0 || index &gt; size()</tt>).
+     * @see #addLazy(Supplier)
+     * @see #add(int, Object)
+     */
     public void addLazy(int index, Supplier<? extends T> lazy) {
         delegate.add(index, Lazy.of(lazy));
     }
 
+    /**
+     * Inserts the specified element at the beginning of this list, without eagerly evaluating it.
+     *
+     * @param lazy The supplier for the new element, evaluated only if necessary.
+     * @see #addLazy(Supplier)
+     * @see #addLazy(int, Supplier)
+     */
     public void addFirstLazy(Supplier<? extends T> lazy) {
         addLazy(0, lazy);
     }
 
+    /**
+     * Adds the specified element to the end of this list, without eagerly evaluating it.
+     *
+     * <p>
+     * This is another variant of {@link #addLazy(Supplier)}.
+     *
+     * @param lazy The supplier for the new element, evaluated only if necessary.
+     * @see #addLazy(Supplier)
+     * @see #add(Object)
+     */
     public void addLastLazy(Supplier<? extends T> lazy) {
         addLazy(lazy);
     }
 
-    public boolean addAllLazy(int index, Collection<Lazy<T>> lazyValues) {
-        return delegate.addAll(index, lazyValues);
+    /**
+     * Adds the lazy elements in the specified collection to the end of this list.
+     *
+     * <p>
+     * All added lazy elements are evaluated only when they are first-needed.
+     *
+     * @param lazyValues The collection of lazy elements to be added to this list.
+     * @return {@code true} if this list changed as a result of the call.
+     * @see #addAllLazy(int, Collection)
+     * @see #addAll(Collection)
+     */
+    public boolean addAllLazy(Collection<Supplier<? extends T>> lazyValues) {
+        return addAllLazy(size(), lazyValues);
     }
 
+    /**
+     * Inserts the lazy elements in the specified collection into this list at the specified position.
+     *
+     * <p>
+     * Shifts the element currently at that position (if any) and any subsequent elements to the right
+     * (increases their indices).
+     * The new elements will appear in this list in the order that they are returned by the specified collection's iterator.
+     *
+     * <p>
+     * All inserted lazy elements are evaluated only when they are first-needed.
+     *
+     * @param index      The index at which to insert the first element from the specified collection.
+     * @param lazyValues The collection of lazy elements to be inserted into this list.
+     * @return {@code true} if this list changed as a result of the call.
+     * @see #addAll(int, Collection)
+     * @see #addAllLazy(Collection)
+     */
+    public boolean addAllLazy(int index, Collection<Supplier<? extends T>> lazyValues) {
+        boolean changed = false;
+        for (Supplier<? extends T> lazyValue : lazyValues) {
+            addLazy(index++, lazyValue);
+            changed = true;
+        }
+        return changed;
+    }
+
+    /**
+     * Removes and returns the specified element from this list, without eagerly evaluating it.
+     *
+     * @param index The index of the element to remove.
+     * @return The removed element.
+     * @see #remove(int)
+     */
     public Lazy<T> removeLazy(int index) {
         return delegate.remove(index);
     }
@@ -174,26 +263,63 @@ public class LazyList<T> extends AbstractList<T> {
         return getNullSafe(getLazy(index));
     }
 
+    /**
+     * Replaces the element at the specified position in this list with the specified element.
+     *
+     * <p>
+     * The previous value at this index is returned, if it was already evaluated.
+     * Otherwise {@code null} is returned without forcing evaluation.
+     *
+     * @param index   The index of the element to set the new value for. This index must be within the bounds of the list.
+     * @param element The new value for the element at the specified index.
+     * @return The previous value at the specified index, if present and available. Otherwise {@code null}.
+     * @see #setLazy(int, Supplier)
+     */
     @Override
     public T set(int index, T element) {
         return getIfAvailableElseNull(setLazy(index, Lazy.eager(element)));
     }
 
+    /**
+     * Adds the specified element at the specified position in this list.
+     *
+     * @return {@code true} if the element was added to the list.
+     * @see #addLazy(Supplier)
+     */
     @Override
     public boolean add(T value) {
         return addLazy(Lazy.eager(value));
     }
 
+    /**
+     * Inserts the specified element at the specified position in this list.
+     *
+     * @param index   The index at which the specified element is to be inserted.
+     * @param element The element to be inserted.
+     * @see #addLazy(int, Supplier)
+     */
     @Override
     public void add(int index, T element) {
         addLazy(index, Lazy.eager(element));
     }
 
+    /**
+     * Inserts the specified values at the specified position in this list.
+     *
+     * @param index  The index at which the specified element is to be inserted.
+     * @param values The values to be inserted.
+     * @return {@code true} if the values were inserted in the list.
+     * @see #addAllLazy(int, Collection)
+     * @see #addAllLazy(Collection)
+     */
     @Override
-    public boolean addAll(int index, Collection<? extends T> c) {
-        return addAllLazy(index, c.stream()
-                .map(v -> Lazy.eager((T) v))
-                .collect(toCollection(ArrayList::new)));
+    public boolean addAll(int index, Collection<? extends T> values) {
+        boolean changed = false;
+        for (T value : values) {
+            add(index++, value);
+            changed = true;
+        }
+        return changed;
     }
 
     /**
@@ -222,6 +348,9 @@ public class LazyList<T> extends AbstractList<T> {
      */
     @SuppressWarnings("java:S1161") // Can't override, removeFirst is not yet part of the Java 8 Collections API.
     public T removeFirst() {
+        if (isEmpty()) {
+            throw new NoSuchElementException();
+        }
         return remove(0);
     }
 
@@ -236,29 +365,63 @@ public class LazyList<T> extends AbstractList<T> {
      */
     @SuppressWarnings("java:S1161") // Can't override, removeLast is not yet part of the Java 8 Collections API.
     public T removeLast() {
+        if (isEmpty()) {
+            throw new NoSuchElementException();
+        }
         return remove(size() - 1);
     }
 
+    /**
+     * Replaces each element of this list with the result of applying the operator to that element.
+     *
+     * <p>
+     * The operator will be applied <em>lazily</em> when the result is needed for the first time.
+     * So even if the underlying <em>value</em> is already available, the operator will not be applied immediately.
+     *
+     * @param operator The operator to lazily apply to each element.
+     * @see Lazy#map(Function)
+     */
     @Override
     public void replaceAll(UnaryOperator<T> operator) {
         delegate.replaceAll(lazy -> lazy.map(operator));
     }
 
+    /**
+     * Sorts this list in accordance with the specified {@link Comparator}.
+     *
+     * <p>
+     * Sorting will eagerly evaluate <em>all</em> lazy values currently contained in the list.
+     *
+     * @param comparator The comparator comparing the individual values to each-other.
+     */
     @Override
-    public void sort(Comparator<? super T> c) {
-        delegate.sort(Comparator.comparing(Lazy::get, c));
+    public void sort(Comparator<? super T> comparator) {
+        delegate.sort(Comparator.comparing(Lazy::get, comparator));
     }
 
+    /**
+     * The number of elements in this list.
+     *
+     * @return The number of elements in this list.
+     */
     @Override
     public int size() {
         return delegate.size();
     }
 
+    /**
+     * Whether the list is empty or not.
+     *
+     * @return {@code true} if the list is empty, {@code false} otherwise.
+     */
     @Override
     public boolean isEmpty() {
         return delegate.isEmpty();
     }
 
+    /**
+     * Removes <em>all</em> elements from the list, regardless of whether they have already been evaluated.
+     */
     @Override
     public void clear() {
         delegate.clear();
@@ -284,16 +447,68 @@ public class LazyList<T> extends AbstractList<T> {
         return new LazyListIterator<>(delegate.listIterator(index));
     }
 
+    /**
+     * Attempts to find the specified value in this list.
+     *
+     * <p>
+     * Values are evaluated in-order until the first match is found.
+     * This means that <em>all</em> lazy values 'left' of the found element
+     * will have been eagerly evaluated.<br>
+     * If no matching element is found, the method returns {@code -1}
+     * and <em>all</em> elements will have been eagerly evaluated.
+     *
+     * @param value the element to search for.
+     * @return The index of the first matching element, or {@code -1} if no match was found.
+     * @implNote Note that getting the index of an element may evaluate more elements
+     * than calling {@link #contains(Object)} does, because the latter uses a two-pass algorithm
+     * where the first pass checks the available values only.
+     * @see #contains(Object)
+     * @see #streamAvailable()
+     * @see #streamLazy()
+     */
     @Override
-    public int indexOf(Object o) {
-        return delegate.indexOf(Lazy.eager(o));
+    public int indexOf(Object value) {
+        return delegate.indexOf(Lazy.eager(value));
     }
 
+    /**
+     * Attempts to find the last occurrence of the specified value in this list.
+     *
+     * <p>
+     * Values are evaluated in reverse order until the first match is found.
+     * This means that <em>all</em> lazy values to the 'right' of the found element
+     * will have been eagerly evaluated.<br>
+     * If no matching element is found, the method returns {@code -1}
+     * and <em>all</em> elements will have been eagerly evaluated.
+     *
+     * @param value the element to search for.
+     * @return The index of the last matching element, or {@code -1} if no match was found.
+     * @implNote Note that getting the last index of an element may evaluate more elements
+     * than calling {@link #contains(Object)} does, because the latter uses a two-pass algorithm
+     * where the first pass checks the available values only.
+     * @see #contains(Object)
+     * @see #streamAvailable()
+     * @see #streamLazy()
+     */
     @Override
-    public int lastIndexOf(Object o) {
-        return delegate.lastIndexOf(Lazy.eager(o));
+    public int lastIndexOf(Object value) {
+        return delegate.lastIndexOf(Lazy.eager(value));
     }
 
+    /**
+     * Whether the specified value is contained in this list.
+     *
+     * @param value element whose presence in this collection is to be tested.
+     * @param value The value to check for.
+     * @return {@code true} if this collection contains the specified element.
+     * @return {@code true} if the list contains the specified value, {@code false} otherwise.
+     * @implNote This implementation uses a two-pass algorithm where the first pass checks available values only.
+     * This avoids unnecessary eager evaluation of lazy values when the searched value is already evaluated.
+     * If the method returns {@code false}, <em>all</em> lazy values have been evaluated.
+     * @see #streamAvailable()
+     * @see #streamLazy()
+     * @see #containsAll(Collection)
+     */
     @Override
     public boolean contains(Object value) {
         // First pass, only check the already-available values.
@@ -309,6 +524,15 @@ public class LazyList<T> extends AbstractList<T> {
         return requiresSecondPass && delegate.contains(Lazy.eager(value));
     }
 
+    /**
+     * Remove an instance of the specified value from this list.
+     *
+     * @param value element to be removed from this collection, if present
+     * @return {@code true} if the requested element was removed from this collection.
+     * @implNote This implementation uses a two-pass algorithm where the first pass checks available values only.
+     * This avoids unnecessary eager evaluation of lazy values when the searched value is already evaluated.
+     * If the method returns {@code false}, <em>all</em> lazy values have been evaluated.
+     */
     @Override
     public boolean remove(Object value) {
         // First pass, only check the already-available values.
@@ -326,8 +550,23 @@ public class LazyList<T> extends AbstractList<T> {
         return requiresSecondPass && delegate.remove(Lazy.eager(value));
     }
 
+    /**
+     * Create a lazy sublist of this list.
+     *
+     * <p>
+     * The sublist will be backed by the same underlying list,
+     * so changes to the original list will be reflected in the sublist and vice versa.
+     *
+     * <p>
+     * New {@link Lazy} values {@link #addLazy(Supplier) added} to the sublist will be shared by both lists,
+     * still evaluating them only once, when needed.
+     *
+     * @param fromIndex low endpoint (inclusive) of the subList
+     * @param toIndex   high endpoint (exclusive) of the subList
+     * @return A new {@link LazyList} containing the elements between the specified fromIndex (inclusive) and toIndex (exclusive).
+     */
     @Override
-    public List<T> subList(int fromIndex, int toIndex) {
+    public LazyList<T> subList(int fromIndex, int toIndex) {
         return new LazyList<>(() -> delegate.subList(fromIndex, toIndex));
     }
 

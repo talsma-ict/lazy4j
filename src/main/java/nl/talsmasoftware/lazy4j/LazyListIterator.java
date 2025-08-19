@@ -32,13 +32,13 @@ public final class LazyListIterator<T> implements LazyIterator<T>, ListIterator<
         return delegate.hasNext();
     }
 
+    public Lazy<T> nextLazy() {
+        return delegate.next();
+    }
+
     @Override
     public T next() {
         return getNullSafe(nextLazy());
-    }
-
-    public Lazy<T> nextLazy() {
-        return delegate.next();
     }
 
     @Override
@@ -46,13 +46,13 @@ public final class LazyListIterator<T> implements LazyIterator<T>, ListIterator<
         return delegate.hasPrevious();
     }
 
+    public Lazy<T> previousLazy() {
+        return delegate.previous();
+    }
+
     @Override
     public T previous() {
         return getNullSafe(previousLazy());
-    }
-
-    public Lazy<T> previousLazy() {
-        return delegate.previous();
     }
 
     @Override
@@ -70,22 +70,22 @@ public final class LazyListIterator<T> implements LazyIterator<T>, ListIterator<
         delegate.remove();
     }
 
+    public void setLazy(Supplier<? extends T> lazy) {
+        delegate.set(Lazy.of(lazy));
+    }
+
     @Override
     public void set(T value) {
         setLazy(Lazy.eager(value));
     }
 
-    public void setLazy(Supplier<T> lazy) {
-        delegate.set(Lazy.of(lazy));
+    public void addLazy(Supplier<? extends T> lazy) {
+        delegate.add(Lazy.of(lazy));
     }
 
     @Override
     public void add(T value) {
         addLazy(Lazy.eager(value));
-    }
-
-    public void addLazy(Supplier<T> lazy) {
-        delegate.add(Lazy.of(lazy));
     }
 
 }
