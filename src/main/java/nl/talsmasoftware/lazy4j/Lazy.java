@@ -184,7 +184,7 @@ public final class Lazy<T> implements Supplier<T> {
      * and calling {@code getIfAvailable().ifPresent(consumer)}. If the lazy value
      * {@linkplain #isAvailable() is available} but evaluates to {@code null},
      * {@code ifAvailable(consumer)} will get called with evaluated value {@code null},
-     * but {@code getIfAvailable().ifPresent(consumer)} will not get called with {@code null}</em>
+     * but {@code getIfAvailable().ifPresent(consumer)} will not get called with {@code null}</em>.
      *
      * @param consumer The consumer to call if the lazy value is already available.
      * @see #isAvailable()
@@ -192,7 +192,9 @@ public final class Lazy<T> implements Supplier<T> {
      */
     public void ifAvailable(Consumer<? super T> consumer) {
         requireNonNull(consumer, "Consumer of lazy value is <null>");
-        if (isAvailable()) consumer.accept(get());
+        if (isAvailable()) {
+            consumer.accept(get());
+        }
     }
 
     /**
@@ -306,7 +308,8 @@ public final class Lazy<T> implements Supplier<T> {
      * @see #of(Supplier)
      * @deprecated Factory method was renamed to {@code Lazy.of} in version 2.0.1
      */
-    @SuppressWarnings("java:S6355") // Java 8 does not yet support the additional arguments to Deprecated annotation.
+    @SuppressWarnings("java:S6355")
+    // Java 8 does not yet support the additional arguments to Deprecated annotation.
     @Deprecated // (forRemoval = true, since = "2.0.1")
     public static <T> Lazy<T> lazy(Supplier<T> supplier) {
         return Lazy.of(supplier);

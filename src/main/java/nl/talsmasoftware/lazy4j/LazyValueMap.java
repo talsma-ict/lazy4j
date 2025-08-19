@@ -130,7 +130,7 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * @see #put(Object, Object)
      * @see Lazy#of(Supplier)
      */
-    public Lazy<V> putLazy(K key, Supplier<V> valueSupplier) {
+    public Lazy<V> putLazy(K key, Supplier<? extends V> valueSupplier) {
         return delegate.put(key, Lazy.of(valueSupplier));
     }
 
@@ -145,7 +145,7 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * @param value supplier of the value to associate if absent (required, non-{@code null}).
      * @return the existing lazy value if present, or {@code null} if the association was added.
      */
-    public Lazy<V> lazyPutIfAbsent(K key, Supplier<V> value) {
+    public Lazy<V> lazyPutIfAbsent(K key, Supplier<? extends V> value) {
         return delegate.putIfAbsent(key, Lazy.of(value));
     }
 
@@ -211,7 +211,7 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * @return the previous lazy value associated with the key, or {@code null} if there was no mapping.
      * @see #replace(Object, Object)
      */
-    public Lazy<V> lazyReplace(K key, Supplier<V> value) {
+    public Lazy<V> lazyReplace(K key, Supplier<? extends V> value) {
         return delegate.replace(key, Lazy.of(value));
     }
 
@@ -229,7 +229,7 @@ public class LazyValueMap<K, V> extends AbstractMap<K, V> {
      * @return the new lazy value associated with the specified key.
      * @throws NullPointerException if {@code value} is {@code null} (via {@link Lazy#of(Supplier)}).
      */
-    public Lazy<V> lazyMerge(K key, Supplier<V> value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+    public Lazy<V> lazyMerge(K key, Supplier<? extends V> value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         return delegate.merge(key, Lazy.of(value), (v1, v2) -> Lazy.of(() -> remappingFunction.apply(getNullSafe(v1), getNullSafe(v2))));
     }
 

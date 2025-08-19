@@ -163,7 +163,7 @@ public class LazyList<T> extends AbstractList<T> {
      * @param index The index at which the specified element is to be inserted.
      * @param lazy  The supplier for the new element, evaluated only if necessary.
      * @throws UnsupportedOperationException if the backing list does not support adding elements.
-     * @throws IndexOutOfBoundsException     if the index is out of range (<tt>index &lt; 0 || index &gt; size()</tt>).
+     * @throws IndexOutOfBoundsException     if the index is out of range ({@code index < 0 || index > size()}).
      * @see #addLazy(Supplier)
      * @see #add(int, Object)
      */
@@ -636,9 +636,7 @@ public class LazyList<T> extends AbstractList<T> {
      */
     public void forEachAvailable(Consumer<? super T> action) {
         for (Lazy<T> lazy : delegate) {
-            if (lazy.isAvailable()) {
-                action.accept(lazy.get());
-            }
+            lazy.ifAvailable(action);
         }
     }
 
@@ -658,7 +656,7 @@ public class LazyList<T> extends AbstractList<T> {
 
     @Override
     public Stream<T> stream() {
-        return streamLazy().map(Lazy::get);
+        return streamLazy().map(LazyUtils::getNullSafe);
     }
 
     public Stream<Lazy<T>> streamLazy() {
@@ -666,12 +664,12 @@ public class LazyList<T> extends AbstractList<T> {
     }
 
     public Stream<T> streamAvailable() {
-        return streamLazy().filter(Lazy::isAvailable).map(Lazy::get);
+        return streamLazy().filter(LazyUtils::isAvailable).map(Lazy::get);
     }
 
     @Override
     public Stream<T> parallelStream() {
-        return parallelStreamLazy().map(Lazy::get);
+        return parallelStreamLazy().map(LazyUtils::getNullSafe);
     }
 
     public Stream<Lazy<T>> parallelStreamLazy() {
@@ -679,7 +677,7 @@ public class LazyList<T> extends AbstractList<T> {
     }
 
     public Stream<T> parallelStreamAvailable() {
-        return parallelStreamLazy().filter(Lazy::isAvailable).map(Lazy::get);
+        return parallelStreamLazy().filter(LazyUtils::isAvailable).map(Lazy::get);
     }
 
     /**

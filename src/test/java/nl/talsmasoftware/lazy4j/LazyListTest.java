@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -802,5 +803,54 @@ class LazyListTest {
 
         assertThat(sublist).containsExactly("new");
         assertThat(subject).containsExactly("test", "new");
+    }
+
+    @Test
+    void testEquals() {
+        LazyList<String> subject = new LazyList<>();
+        subject.addLazy(() -> "test");
+        subject.addLazy(() -> "other");
+
+        assertThat(subject).isEqualTo(subject)
+                .isNotEqualTo(null)
+                .isNotEqualTo(new Object())
+                .isNotEqualTo(new LazyList<>(singletonList("other")))
+                .isNotEqualTo(new LazyList<>(singletonList("test")))
+                .isNotEqualTo(new LazyList<>(Arrays.asList("other", "test")))
+                .isEqualTo(new LazyList<>(Arrays.asList("test", "other")))
+                .isEqualTo(Arrays.asList("test", "other"))
+                .isEqualTo(new ArrayList<>(Arrays.asList("test", "other")))
+                .isEqualTo(new LinkedList<>(Arrays.asList("test", "other")));
+    }
+
+    @Test
+    void testHashCode() {
+        LazyList<String> subject = new LazyList<>();
+        subject.addLazy(() -> "test");
+        subject.addLazy(() -> "other");
+
+        assertThat(subject).hasSameHashCodeAs(subject)
+                .hasSameHashCodeAs(new LazyList<>(Arrays.asList("test", "other")))
+                .hasSameHashCodeAs(Arrays.asList("test", "other"))
+                .hasSameHashCodeAs(new ArrayList<>(Arrays.asList("test", "other")))
+                .hasSameHashCodeAs(new LinkedList<>(Arrays.asList("test", "other")));
+    }
+
+    @Test
+    void toString_unresolved() {
+        LazyList<String> subject = new LazyList<>();
+        subject.addLazy(() -> "test");
+        subject.addLazy(() -> "other");
+
+        assertThat(subject).hasToString("[Lazy.unresolved, Lazy.unresolved]");
+    }
+
+    @Test
+    void toString_resolved() {
+        LazyList<String> subject = new LazyList<>();
+        subject.add("test");
+        subject.add("other");
+
+        assertThat(subject).hasToString("[Lazy[test], Lazy[other]]");
     }
 }
