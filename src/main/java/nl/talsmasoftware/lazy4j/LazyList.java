@@ -35,6 +35,28 @@ import static java.util.Objects.requireNonNull;
 import static nl.talsmasoftware.lazy4j.LazyUtils.getIfAvailableElseNull;
 import static nl.talsmasoftware.lazy4j.LazyUtils.getNullSafe;
 
+/**
+ * A list that can store its values in a {@link Lazy} manner.
+ *
+ * <p>
+ * This has the advantage that while providing 'standard' {@link List} features,
+ * unused values do not need to be evaluated.
+ *
+ * <p>
+ * The behaviour of this list depends on the delegate list it was {@link #LazyList(Supplier) initialized} with.<br>
+ * If the delegate list is mutable, the lazy list will be mutable as well.<br>
+ * If the delegate list is thread-safe, the lazy list will be thread-safe as well.<br>
+ * If the lazy list is sorted, its purpose may be defeated because all values have to be evaluated eagerly for comparison.<br>
+ * The {@link #LazyList() default} and {@link #LazyList(Collection) copy} constructors create a lazy list
+ * that behaves like an {@link ArrayList}.<br>
+ * If the backing list does <em>not</em> support {@code null} values, the lazy list <em>will</em> support them,
+ * because the values are wrapped in a {@link Lazy} object, therefore will never be {@code null} in the backing map.
+ *
+ * @param <T> The type of values in the list.
+ * @author Sjoerd Talsma
+ * @see Lazy
+ * @since 2.0.3
+ */
 public class LazyList<T> extends AbstractList<T> {
     /**
      * The delegate list containing the lazy values.
@@ -215,7 +237,7 @@ public class LazyList<T> extends AbstractList<T> {
      * Inserts the lazy elements in the specified collection into this list at the specified position.
      *
      * <p>
-     * Shifts the element currently at that position (if any) and any subsequent elements to the right
+     * Shifts the element currently at that position (if any) and any elements to the right
      * (increases their indices).
      * The new elements will appear in this list in the order that they are returned by the specified collection's iterator.
      *
@@ -427,6 +449,15 @@ public class LazyList<T> extends AbstractList<T> {
         delegate.clear();
     }
 
+    /**
+     * A lazy spliterator over the elements in this list.
+     *
+     * <p>
+     * The spliterator will have the same behaviour characteristics as the spliterator of the underlying list.
+     *
+     * @return a lazy Spliterator over the elements in this list
+     * @see List#spliterator()
+     */
     @Override
     public Spliterator<T> spliterator() {
         return new LazySpliterator<>(delegate.spliterator());
@@ -612,14 +643,43 @@ public class LazyList<T> extends AbstractList<T> {
         return delegate.toString();
     }
 
+    /**
+     * Returns the elements in this list as an array of lazy values.
+     *
+     * @return An array of all lazy values.
+     */
     public Lazy<T>[] toLazyArray() {
         return toLazyArray(Lazy[]::new);
     }
 
-    public Lazy<T>[] toLazyArray(Lazy<T>[] a) {
-        return toLazyArray(s -> a);
+    /**
+     * Returns an array of all lazy values in the list.
+     *
+     * <p>
+     * This includes both evaluated and not-yet evaluated values.
+     *
+     * @param array The array to return the elements in
+     *              (if it is big enough; otherwise, a new array of the same runtime type created).
+     * @return Array containing all lazy values from this list.
+     * @see Lazy
+     * @see #streamLazy()
+     */
+    public Lazy<T>[] toLazyArray(Lazy<T>[] array) {
+        return toLazyArray(s -> array);
     }
 
+    /**
+     * Returns an array of all lazy values in the list.
+     *
+     * <p>
+     * This includes both evaluated and not-yet evaluated values.
+     *
+     * @param generator Generator for the array to return the elements in
+     *                  (if it is big enough; otherwise, a new array of the same runtime type created).
+     * @return Array containing all lazy values from this list.
+     * @see Lazy
+     * @see #streamLazy()
+     */
     public Lazy<T>[] toLazyArray(IntFunction<Lazy<T>[]> generator) {
         return delegate.toArray(generator.apply(size()));
     }
@@ -648,34 +708,121 @@ public class LazyList<T> extends AbstractList<T> {
      * @see #forEach(Consumer)
      * @see Lazy
      */
-    public void forEachLazy(Consumer<Lazy<? super T>> action) {
+    public void forEachLazy(Consumer<Lazy<T>> action) {
         for (Lazy<T> lazy : delegate) {
             action.accept(lazy);
         }
     }
 
+    /**
+     * A sequential Stream of the evaluated values in this lazy List.
+     *
+     * <p>
+     * Iterated values are evaluated eagerly. See {@link #streamAvailable()} or {@link #streamLazy()}
+     * for streams that do not eagerly evaluate lazy values.
+     *
+     * <p>
+     * This is the equivalent of calling {@code streamLazy().map(Lazy::get)}.
+     *
+     * @return Sequential stream of all values in this list.
+     * @see #streamAvailable()
+     * @see #streamLazy()
+     * @see #parallelStreamLazy()
+     * @see #parallelStreamAvailable()
+     */
     @Override
     public Stream<T> stream() {
         return streamLazy().map(LazyUtils::getNullSafe);
     }
 
+    /**
+     * Sequential Stream of the lazy values in this List.
+     *
+     * <p>
+     * This returns both evaluated and not-yet evaluated lazy values.
+     *
+     * @return Sequential stream of all lazy values in this list.
+     * @see #streamAvailable()
+     * @see #parallelStreamLazy()
+     * @see #parallelStreamAvailable()
+     */
     public Stream<Lazy<T>> streamLazy() {
         return delegate.stream();
     }
 
+    /**
+     * Sequential Stream of the available (already-evaluated) values in this list, skipping not-yet evaluated lazy values.
+     *
+     * <p>
+     * This is the equivalent of calling<br>
+     * {@code streamLazy().filter(Lazy::isAvailable).map(Lazy::get)}.
+     *
+     * @return Sequential stream of the available values.
+     * @see #streamLazy()
+     * @see #parallelStreamAvailable()
+     * @see #parallelStreamLazy()
+     */
     public Stream<T> streamAvailable() {
         return streamLazy().filter(LazyUtils::isAvailable).map(Lazy::get);
     }
 
+    /**
+     * A parallel Stream of the evaluated values in this lazy List.
+     *
+     * <p>
+     * If the backing list does not support parallel streams, a sequential stream is returned.
+     *
+     * <p>
+     * Iterated values are evaluated eagerly. See {@link #parallelStreamAvailable()} or {@link #parallelStreamLazy()}
+     * for streams that do not eagerly evaluate lazy values.
+     *
+     * <p>
+     * This is the equivalent of calling {@code parallelStreamLazy().map(Lazy::get)}.
+     *
+     * @return Parallel stream of all values in this list.
+     * @see #parallelStreamAvailable()
+     * @see #parallelStreamLazy()
+     * @see #streamLazy()
+     * @see #streamAvailable()
+     */
     @Override
     public Stream<T> parallelStream() {
         return parallelStreamLazy().map(LazyUtils::getNullSafe);
     }
 
+    /**
+     * Parallel Stream of the lazy values in this List.
+     *
+     * <p>
+     * If the backing list does not support parallel streams, a sequential stream is returned.
+     *
+     * <p>
+     * This returns both evaluated and not-yet evaluated lazy values.
+     *
+     * @return Parallel stream of all lazy values in this list.
+     * @see #parallelStreamAvailable()
+     * @see #streamLazy()
+     * @see #streamAvailable()
+     */
     public Stream<Lazy<T>> parallelStreamLazy() {
         return delegate.parallelStream();
     }
 
+    /**
+     * Parallel Stream of the available (already-evaluated) values in this list, skipping not-yet evaluated lazy values.
+     *
+     * <p>
+     * If the backing list does not support parallel streams, a sequential stream is returned.
+     *
+     * <p>
+     * This is the equivalent of calling<br>
+     * {@code parallelStreamLazy().filter(Lazy::isAvailable).map(Lazy::get)}.
+     *
+     * @return Parallel stream of the available values.
+     * @see #streamLazy()
+     * @see #parallelStreamAvailable()
+     * @see #parallelStreamLazy()
+     */
     public Stream<T> parallelStreamAvailable() {
         return parallelStreamLazy().filter(LazyUtils::isAvailable).map(Lazy::get);
     }
@@ -705,6 +852,11 @@ public class LazyList<T> extends AbstractList<T> {
         return copy;
     }
 
+    /**
+     * Lazy Spliterator implementation for {@link LazyList}.
+     *
+     * @param <T> The type of elements in the list.
+     */
     private static final class LazySpliterator<T> implements Spliterator<T> {
         private final Spliterator<Lazy<T>> delegateSpliterator;
 

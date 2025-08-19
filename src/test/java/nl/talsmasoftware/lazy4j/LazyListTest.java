@@ -22,16 +22,38 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class LazyListTest {
+
+    @Test
+    void copyConstructor_existingLazyList() {
+        Lazy<String> test = Lazy.of(() -> "test");
+        Lazy<String> other = Lazy.of(() -> "other");
+        LazyList<String> source = new LazyList<>();
+        source.addLazy(test);
+        source.addLazy(other);
+
+        LazyList<String> subject = new LazyList<>(source);
+
+        // Values are copied as-is without eager evaluation.
+        assertThat(test.isAvailable()).isFalse();
+        assertThat(other.isAvailable()).isFalse();
+        assertThat(subject).isEqualTo(Arrays.asList("test", "other"));
+    }
 
     @Test
     void getLazy() {
@@ -852,5 +874,217 @@ class LazyListTest {
         subject.add("other");
 
         assertThat(subject).hasToString("[Lazy[test], Lazy[other]]");
+    }
+
+    @Test
+    void forEachAvailable_empty() {
+        LazyList<String> subject = new LazyList<>();
+        subject.forEachAvailable(s -> fail("Should not be called"));
+    }
+
+    @Test
+    void forEachAvailable() {
+        LazyList<String> subject = new LazyList<>();
+        subject.addLazy(() -> "one");
+        subject.add("two");
+        subject.addLazy(() -> "three");
+        subject.add("four");
+        List<String> result = new ArrayList<>();
+
+        subject.forEachAvailable(result::add);
+
+        assertThat(result).containsExactly("two", "four");
+    }
+
+    @Test
+    void forEachLazy_empty() {
+        LazyList<String> subject = new LazyList<>();
+        subject.forEachLazy(s -> fail("Should not be called"));
+    }
+
+    @Test
+    void forEachLazy() {
+        LazyList<String> subject = new LazyList<>();
+        subject.addLazy(() -> "one");
+        subject.add("two");
+        subject.addLazy(() -> "three");
+        subject.add("four");
+        List<Lazy<String>> result = new ArrayList<>();
+
+        subject.forEachLazy(result::add);
+
+        assertThat(result.stream().map(Lazy::getIfAvailable))
+                .containsExactly(Optional.empty(), Optional.of("two"), Optional.empty(), Optional.of("four"));
+        assertThat(result.stream().map(Lazy::get)).containsExactly("one", "two", "three", "four");
+    }
+
+    @Test
+    void stream() {
+        LazyList<String> subject = new LazyList<>();
+        subject.addLazy(() -> "one");
+        subject.addLazy(() -> "two");
+        subject.addLazy(() -> "three");
+
+        Stream<String> result = subject.stream().skip(1).limit(1);
+
+        assertThat(result).containsExactly("two");
+        assertThat(subject.getLazy(0).getIfAvailable()).contains("one");
+        assertThat(subject.getLazy(1).getIfAvailable()).contains("two");
+        assertThat(subject.getLazy(2).getIfAvailable()).isEmpty();
+
+        assertThat(subject.stream()).containsExactly("one", "two", "three");
+    }
+
+    @Test
+    void streamLazy() {
+        LazyList<String> subject = new LazyList<>();
+        subject.addLazy(() -> "one");
+        subject.add("two");
+        subject.addLazy(() -> "three");
+
+        assertThat(subject.streamLazy()).hasSize(3);
+        assertThat(subject.streamLazy().map(Lazy::getIfAvailable)).containsExactly(Optional.empty(), Optional.of("two"), Optional.empty());
+        assertThat(subject.streamLazy().map(Lazy::get)).containsExactly("one", "two", "three");
+    }
+
+    @Test
+    void streamAvailable() {
+        LazyList<String> subject = new LazyList<>();
+        subject.addLazy(() -> "one");
+        subject.add("two");
+        subject.addLazy(() -> "three");
+
+        assertThat(subject.streamAvailable()).hasSize(1).containsExactly("two");
+
+        subject.get(2);
+        assertThat(subject.streamAvailable()).hasSize(2).containsExactly("two", "three");
+
+        subject.get(0);
+        assertThat(subject.streamAvailable()).hasSize(3).containsExactly("one", "two", "three");
+    }
+
+    @Test
+    void parallelStream() {
+        LazyList<String> subject = new LazyList<>();
+        subject.addLazy(() -> "one");
+        subject.addLazy(() -> "two");
+        subject.addLazy(() -> "three");
+
+        Stream<String> result = subject.parallelStream().skip(1).limit(1);
+
+        assertThat(result).containsExactly("two");
+        assertThat(subject.getLazy(0).getIfAvailable()).contains("one");
+        assertThat(subject.getLazy(1).getIfAvailable()).contains("two");
+        assertThat(subject.getLazy(2).getIfAvailable()).isEmpty();
+
+        assertThat(subject.parallelStream()).containsExactly("one", "two", "three");
+    }
+
+    @Test
+    void parallelStreamLazy() {
+        LazyList<String> subject = new LazyList<>();
+        subject.addLazy(() -> "one");
+        subject.add("two");
+        subject.addLazy(() -> "three");
+
+        assertThat(subject.parallelStreamLazy()).hasSize(3);
+        assertThat(subject.parallelStreamLazy().map(Lazy::getIfAvailable)).containsExactly(Optional.empty(), Optional.of("two"), Optional.empty());
+        assertThat(subject.parallelStreamLazy().map(Lazy::get)).containsExactly("one", "two", "three");
+    }
+
+    @Test
+    void parallelStreamAvailable() {
+        LazyList<String> subject = new LazyList<>();
+        subject.addLazy(() -> "one");
+        subject.add("two");
+        subject.addLazy(() -> "three");
+
+        assertThat(subject.parallelStreamAvailable()).hasSize(1).containsExactly("two");
+
+        subject.get(2);
+        assertThat(subject.parallelStreamAvailable()).hasSize(2).containsExactly("two", "three");
+
+        subject.get(0);
+        assertThat(subject.parallelStreamAvailable()).hasSize(3).containsExactly("one", "two", "three");
+    }
+
+    @Test
+    void toLazyArray_empty() {
+        LazyList<String> subject = new LazyList<>();
+
+        Lazy<String>[] result = subject.toLazyArray();
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void toLazyArray() {
+        LazyList<String> subject = new LazyList<>();
+        subject.addLazy(() -> "one");
+        subject.add("two");
+        subject.addLazy(() -> "three");
+
+        Lazy<String>[] result = subject.toLazyArray();
+
+        assertThat(result).hasSize(3);
+        assertThat(result[0].getIfAvailable()).isEmpty();
+        assertThat(result[1].getIfAvailable()).contains("two");
+        assertThat(result[2].getIfAvailable()).isEmpty();
+
+        assertThat(subject.streamLazy().map(Lazy::getIfAvailable))
+                .containsExactly(Optional.empty(), Optional.of("two"), Optional.empty());
+
+        assertThat(result[0].get()).isEqualTo("one");
+        assertThat(subject.getLazy(0).isAvailable()).isTrue();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void toLazyArray_zeroSizedArray() {
+        LazyList<String> subject = new LazyList<>();
+        subject.addLazy(() -> "one");
+        subject.add("two");
+        subject.addLazy(() -> "three");
+
+        Lazy<String>[] result = subject.toLazyArray(new Lazy[0]);
+
+        assertThat(result).hasSize(3);
+        assertThat(result[0].getIfAvailable()).isEmpty();
+        assertThat(result[1].getIfAvailable()).contains("two");
+        assertThat(result[2].getIfAvailable()).isEmpty();
+
+        assertThat(subject.streamLazy().map(Lazy::getIfAvailable))
+                .containsExactly(Optional.empty(), Optional.of("two"), Optional.empty());
+
+        assertThat(result[0].get()).isEqualTo("one");
+        assertThat(subject.getLazy(0).isAvailable()).isTrue();
+    }
+
+    @Test
+    void spliteratorTest() {
+        LazyList<String> subject = new LazyList<>();
+        subject.addLazy(() -> "one");
+        subject.add("two");
+        subject.addLazy(() -> "three");
+        subject.add("four");
+
+        assertThat(StreamSupport.stream(subject.spliterator(), false))
+                .containsExactly("one", "two", "three", "four");
+        assertThat(StreamSupport.stream(subject.spliterator(), true))
+                .containsExactly("one", "two", "three", "four");
+        assertThat(subject.spliterator().getExactSizeIfKnown()).isEqualTo(4);
+        assertThat(subject.spliterator().estimateSize()).isEqualTo(4);
+        assertThat(subject.spliterator().characteristics())
+                .isEqualTo(new ArrayList<String>().spliterator().characteristics());
+
+        Spliterator<String> result = subject.spliterator();
+        Spliterator<String> split = result.trySplit();
+
+        assertThat(result.estimateSize()).isEqualTo(2);
+        assertThat(split.estimateSize()).isEqualTo(2);
+
+        assertThat(result.trySplit().estimateSize()).isEqualTo(1);
+        assertThat(result.estimateSize()).isEqualTo(1);
+        assertThat(result.trySplit()).isNull();
     }
 }
