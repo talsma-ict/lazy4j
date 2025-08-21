@@ -35,7 +35,7 @@ import static nl.talsmasoftware.lazy4j.LazyUtils.getNullSafe;
  * unused values do not need to be evaluated.
  *
  * <p>
- * The behaviour of this list depends on the delegate list it was {@link #LazyList(Supplier) initialized} with.<br>
+ * The behaviour of this list depends on the delegate list it was {@link #using(List) initialized} with.<br>
  * If the delegate list is mutable, the lazy list will be mutable as well.<br>
  * If the delegate list is thread-safe, the lazy list will be thread-safe as well.<br>
  * If the lazy list is sorted, its purpose may be defeated because all values have to be evaluated eagerly for comparison.<br>
@@ -60,8 +60,12 @@ public class LazyList<T> extends AbstractList<T> {
      * <p>
      * The returned list will be backed by an {@linkplain ArrayList}, implementing {@link RandomAccess}.
      *
+     * <p>
+     * To provide the backing list implementation, call {@link #using(List)}.
+     *
      * @param <T> The type of lazy values in the list.
      * @return A new, empty {@code LazyList}, behaving like an {@link ArrayList}.
+     * @see #using(List)
      */
     public static <T> LazyList<T> create() {
         return new LazyRandomAccessList<>(new ArrayList<>());
@@ -74,32 +78,46 @@ public class LazyList<T> extends AbstractList<T> {
      * The new list behaves like a {@link ArrayList}.
      *
      * @param toCopy The collection to copy the contents from.
-     * @see #LazyList(Supplier)
+     * @param <T>    The type of lazy values in the list.
+     * @return A new {@code LazyList} with the same contents as the specified collection.
+     * @see #using(List)
      */
     public static <T> LazyList<T> copyOf(Collection<? extends T> toCopy) {
         return new LazyRandomAccessList<>(copyToLazyArrayList(toCopy));
     }
 
     /**
-     * Creates a new {@code LazyList} backed by a list created by the specified map factory.
+     * Creates a new {@code LazyList} backed by a list to contain the {@link Lazy} values.
      *
      * <p>
      * This offers full control over the backing list implementation.
      * For instance:
      * <pre>{@code
-     * List<T> lazyArrayList = new LazyValueList<>(ArrayList::new);
-     * List<T> lazyLinkedList = new LazyValueList<>(LinkedList::new);
+     * List<T> lazyArrayList = LazyList.using(new ArrayList<>());
+     * List<T> lazyLinkedList = LazyList.using(new LinkedList<>());
      * }</pre>
      *
      * <p>
-     * Technically, the listFactory does not <em>need</em> to create a new list,
-     * but please be aware that sharing the delegate list may cause unexpected behaviour,
-     * especially if it is accessed concurrently.
+     * Technically, the backing list does not <em>need</em> to be a new list,
+     * but please be aware that sharing it list may cause unexpected behaviour,
+     * especially if accessed concurrently.
      *
-     * @param listFactory The list factory to provide the backing list (required, must provide a non-{@code null} list).
+     * @param backingList The backing list (required, must provide a non-{@code null} list).
+     * @param <T>         The type of lazy values in the list.
+     * @return A new {@code LazyList} backed by the specified list.
      */
-    public LazyList(Supplier<List<Lazy<T>>> listFactory) {
-        this.delegate = requireNonNull(listFactory.get(), "Backing list may not be <null>.");
+    public static <T> LazyList<T> using(List<Lazy<T>> backingList) {
+        return backingList instanceof RandomAccess ? new LazyRandomAccessList<>(backingList) : new LazyList<>(backingList);
+    }
+
+    /**
+     * Creates a new {@code LazyList} backed by the specified list.
+     *
+     * @param delegate The backing list storing the lazy values.
+     * @see #using(List)
+     */
+    protected LazyList(List<Lazy<T>> delegate) {
+        this.delegate = requireNonNull(delegate, "Delegate list may not be <null>.");
     }
 
     /**
@@ -525,8 +543,6 @@ public class LazyList<T> extends AbstractList<T> {
      * Whether the specified value is contained in this list.
      *
      * @param value element whose presence in this collection is to be tested.
-     * @param value The value to check for.
-     * @return {@code true} if this collection contains the specified element.
      * @return {@code true} if the list contains the specified value, {@code false} otherwise.
      * @implNote This implementation uses a two-pass algorithm where the first pass checks available values only.
      * This avoids unnecessary eager evaluation of lazy values when the searched value is already evaluated.
@@ -593,7 +609,7 @@ public class LazyList<T> extends AbstractList<T> {
      */
     @Override
     public LazyList<T> subList(int fromIndex, int toIndex) {
-        return new LazyList<>(() -> delegate.subList(fromIndex, toIndex));
+        return LazyList.using(delegate.subList(fromIndex, toIndex));
     }
 
     /**
@@ -849,12 +865,10 @@ public class LazyList<T> extends AbstractList<T> {
 
     public static class LazyRandomAccessList<T> extends LazyList<T> implements RandomAccess {
         protected LazyRandomAccessList(List<Lazy<T>> delegate) {
-            super(() -> {
-                if (!(delegate instanceof RandomAccess)) {
-                    throw new IllegalStateException("LazyRandomAccessList requires a RandomAccess delegate.");
-                }
-                return delegate;
-            });
+            super(delegate);
+            if (!(delegate instanceof RandomAccess)) {
+                throw new IllegalStateException("LazyRandomAccessList requires a RandomAccess delegate.");
+            }
         }
     }
 

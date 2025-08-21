@@ -54,7 +54,7 @@ class LazyIteratorTest {
     @Test
     void forEachRemainingAvailable() {
         List<Lazy<String>> backingList = new ArrayList<>();
-        LazyList<String> lazyList = new LazyList<>(() -> backingList);
+        LazyList<String> lazyList = LazyList.using(backingList);
         lazyList.addLazy(() -> "one");
         lazyList.add("two");
         backingList.add(null);
