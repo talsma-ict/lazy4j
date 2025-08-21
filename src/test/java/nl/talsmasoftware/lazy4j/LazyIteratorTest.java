@@ -26,7 +26,7 @@ class LazyIteratorTest {
 
     @Test
     void nextLazy() {
-        LazyList<String> lazyList = new LazyList<>();
+        LazyList<String> lazyList = LazyList.create();
         lazyList.addLazy(() -> "one");
         lazyList.add("two");
         lazyList.addLazy(() -> "three");
@@ -53,9 +53,11 @@ class LazyIteratorTest {
 
     @Test
     void forEachRemainingAvailable() {
-        LazyList<String> lazyList = new LazyList<>();
+        List<Lazy<String>> backingList = new ArrayList<>();
+        LazyList<String> lazyList = new LazyList<>(() -> backingList);
         lazyList.addLazy(() -> "one");
         lazyList.add("two");
+        backingList.add(null);
         lazyList.addLazy(() -> "three");
         lazyList.add("four");
         List<String> results = new ArrayList<>();

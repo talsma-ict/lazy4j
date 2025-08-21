@@ -70,7 +70,7 @@ public final class Lazy<T> implements Supplier<T> {
      */
     public static <T> Lazy<T> of(Supplier<? extends T> supplier) {
         requireNonNull(supplier, "Lazy function is <null>.");
-        return supplier instanceof Lazy ? (Lazy<T>) supplier : new Lazy<T>((Supplier<T>) supplier, null);
+        return supplier instanceof Lazy ? (Lazy<T>) supplier : new Lazy<>((Supplier<T>) supplier, null);
     }
 
     /**

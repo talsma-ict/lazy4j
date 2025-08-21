@@ -15,15 +15,7 @@
  */
 package nl.talsmasoftware.lazy4j;
 
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Spliterator;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -47,8 +39,7 @@ import static nl.talsmasoftware.lazy4j.LazyUtils.getNullSafe;
  * If the delegate list is mutable, the lazy list will be mutable as well.<br>
  * If the delegate list is thread-safe, the lazy list will be thread-safe as well.<br>
  * If the lazy list is sorted, its purpose may be defeated because all values have to be evaluated eagerly for comparison.<br>
- * The {@link #LazyList() default} and {@link #LazyList(Collection) copy} constructors create a lazy list
- * that behaves like an {@link ArrayList}.<br>
+ * The {@link #create()} and {@link #copyOf(Collection)} methods create a lazy list that behaves like an {@link ArrayList}.<br>
  * If the backing list does <em>not</em> support {@code null} values, the lazy list <em>will</em> support them,
  * because the values are wrapped in a {@link Lazy} object, therefore will never be {@code null} in the backing map.
  *
@@ -64,12 +55,16 @@ public class LazyList<T> extends AbstractList<T> {
     private final List<Lazy<T>> delegate;
 
     /**
-     * Creates a new empty {@code LazyList}, behaving like an {@link ArrayList}.
+     * Creates a new, empty {@code LazyList}.
      *
-     * @see #LazyList(Supplier)
+     * <p>
+     * The returned list will be backed by an {@linkplain ArrayList}, implementing {@link RandomAccess}.
+     *
+     * @param <T> The type of lazy values in the list.
+     * @return A new, empty {@code LazyList}, behaving like an {@link ArrayList}.
      */
-    public LazyList() {
-        this(ArrayList::new);
+    public static <T> LazyList<T> create() {
+        return new LazyRandomAccessList<>(new ArrayList<>());
     }
 
     /**
@@ -81,8 +76,8 @@ public class LazyList<T> extends AbstractList<T> {
      * @param toCopy The collection to copy the contents from.
      * @see #LazyList(Supplier)
      */
-    public LazyList(Collection<? extends T> toCopy) {
-        this(() -> copyToLazyList(toCopy));
+    public static <T> LazyList<T> copyOf(Collection<? extends T> toCopy) {
+        return new LazyRandomAccessList<>(copyToLazyArrayList(toCopy));
     }
 
     /**
@@ -839,17 +834,28 @@ public class LazyList<T> extends AbstractList<T> {
      * @return a new {@link ArrayList} containing lazy values that mirror the source contents.
      */
     @SuppressWarnings("unchecked") // It is safe to cast '? extends T' to T for reading.
-    private static <T> List<Lazy<T>> copyToLazyList(Collection<? extends T> toCopy) {
+    private static <T> ArrayList<Lazy<T>> copyToLazyArrayList(Collection<? extends T> toCopy) {
         if (toCopy instanceof LazyList) { // Reuse lazy values if we can.
             return new ArrayList<>(((LazyList<T>) toCopy).delegate);
         }
 
         // Otherwise, convert the actual values to (eager) Lazy instances.
-        List<Lazy<T>> copy = new ArrayList<>(toCopy.size());
+        ArrayList<Lazy<T>> copy = new ArrayList<>(toCopy.size());
         for (T value : toCopy) {
             copy.add(Lazy.eager(value));
         }
         return copy;
+    }
+
+    public static class LazyRandomAccessList<T> extends LazyList<T> implements RandomAccess {
+        protected LazyRandomAccessList(List<Lazy<T>> delegate) {
+            super(() -> {
+                if (!(delegate instanceof RandomAccess)) {
+                    throw new IllegalStateException("LazyRandomAccessList requires a RandomAccess delegate.");
+                }
+                return delegate;
+            });
+        }
     }
 
     /**

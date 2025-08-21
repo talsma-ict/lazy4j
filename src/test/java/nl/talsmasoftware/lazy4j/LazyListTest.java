@@ -17,16 +17,9 @@ package nl.talsmasoftware.lazy4j;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Spliterator;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -40,19 +33,21 @@ import static org.junit.jupiter.api.Assertions.fail;
 class LazyListTest {
 
     @Test
-    void copyConstructor_existingLazyList() {
+    void copyOf_existingLazyList() {
         Lazy<String> test = Lazy.of(() -> "test");
         Lazy<String> other = Lazy.of(() -> "other");
-        LazyList<String> source = new LazyList<>();
+        LazyList<String> source = LazyList.create();
         source.addLazy(test);
         source.addLazy(other);
 
-        LazyList<String> subject = new LazyList<>(source);
+        LazyList<String> subject = LazyList.copyOf(source);
 
         // Values are copied as-is without eager evaluation.
         assertThat(test.isAvailable()).isFalse();
         assertThat(other.isAvailable()).isFalse();
-        assertThat(subject).isEqualTo(Arrays.asList("test", "other"));
+        assertThat(subject)
+                .isEqualTo(Arrays.asList("test", "other"))
+                .isInstanceOf(RandomAccess.class);
     }
 
     @Test
@@ -90,7 +85,7 @@ class LazyListTest {
 
     @Test
     void getFirstLazy_emptyList() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         assertThatThrownBy(subject::getFirstLazy).isInstanceOf(IndexOutOfBoundsException.class);
     }
 
@@ -107,7 +102,7 @@ class LazyListTest {
 
     @Test
     void getLastLazy_emptyList() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         assertThatThrownBy(subject::getLastLazy).isInstanceOf(IndexOutOfBoundsException.class);
     }
 
@@ -124,7 +119,7 @@ class LazyListTest {
     void setLazy() {
         // given
         Lazy<String> lazy = Lazy.of(() -> "test");
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "old");
 
         // when
@@ -144,7 +139,7 @@ class LazyListTest {
 
     @Test
     void setLazy_indexOutOfBounds() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         assertThatThrownBy(() -> subject.setLazy(2, () -> "test")).isInstanceOf(IndexOutOfBoundsException.class);
         assertThat(subject).isEmpty();
     }
@@ -152,7 +147,7 @@ class LazyListTest {
     @Test
     void set() {
         Lazy<String> lazy = Lazy.of(() -> "test");
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(lazy);
 
         assertThat(subject.set(0, "other")).isNull();
@@ -164,14 +159,14 @@ class LazyListTest {
 
     @Test
     void set_indexOutOfBounds() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         assertThatThrownBy(() -> subject.set(1, "test")).isInstanceOf(IndexOutOfBoundsException.class);
         assertThat(subject).isEmpty();
     }
 
     @Test
     void addLazy() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
 
         assertThat(subject.addLazy(() -> "test")).isTrue();
         assertThat(subject.addLazy(() -> "test")).isTrue();
@@ -190,7 +185,7 @@ class LazyListTest {
 
     @Test
     void addLazy_index() {
-        LazyList<String> subject = new LazyList<>(singletonList("test"));
+        LazyList<String> subject = LazyList.copyOf(singletonList("test"));
 
         subject.addLazy(1, () -> "last");
         subject.addLazy(0, () -> "first");
@@ -204,7 +199,7 @@ class LazyListTest {
 
     @Test
     void addLazy_index_indexOutOfBounds() {
-        LazyList<String> subject = new LazyList<>(singletonList("test"));
+        LazyList<String> subject = LazyList.copyOf(singletonList("test"));
 
         assertThatThrownBy(() -> subject.addLazy(2, () -> "last"))
                 .isInstanceOf(IndexOutOfBoundsException.class);
@@ -212,7 +207,7 @@ class LazyListTest {
 
     @Test
     void addFirstLazy() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
 
         subject.addFirstLazy(() -> "first");
         subject.addFirstLazy(() -> "second");
@@ -232,7 +227,7 @@ class LazyListTest {
 
     @Test
     void addLastLazy() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
 
         subject.addLastLazy(() -> "first");
         subject.addLastLazy(() -> "second");
@@ -252,7 +247,7 @@ class LazyListTest {
 
     @Test
     void addAllLazy_empty() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         assertThat(subject.addAllLazy(Collections.emptyList())).isFalse();
         assertThat(subject).isEmpty();
     }
@@ -260,13 +255,14 @@ class LazyListTest {
     @Test
     void addAllLazy_unmodifiable() {
         LazyList<String> subject = new LazyList(Collections::emptyList);
-        assertThatThrownBy(() -> subject.addAllLazy(singletonList(() -> "test")))
+        List<Supplier<? extends String>> lazyValuesToAdd = singletonList(() -> "test");
+        assertThatThrownBy(() -> subject.addAllLazy(lazyValuesToAdd))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
     void addAllLazy_list() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
 
         assertThat(subject.addAllLazy(Arrays.asList(() -> "test", () -> "other"))).isTrue();
 
@@ -278,7 +274,7 @@ class LazyListTest {
 
     @Test
     void addAllLazy_index() {
-        LazyList<String> subject = new LazyList<>(singletonList("test"));
+        LazyList<String> subject = LazyList.copyOf(singletonList("test"));
 
         assertThat(subject.addAllLazy(0, Arrays.asList(() -> "first", () -> "second"))).isTrue();
         assertThat(subject.addAllLazy(3, Arrays.asList(() -> "third", () -> "fourth"))).isTrue();
@@ -293,14 +289,15 @@ class LazyListTest {
 
     @Test
     void addAllLazy_index_indexOutOfBounds() {
-        LazyList<String> subject = new LazyList<>(singletonList("test"));
-        assertThatThrownBy(() -> subject.addAllLazy(2, singletonList(() -> "last")))
+        LazyList<String> subject = LazyList.copyOf(singletonList("test"));
+        List<Supplier<? extends String>> lazyValuesToAdd = singletonList(() -> "last");
+        assertThatThrownBy(() -> subject.addAllLazy(2, lazyValuesToAdd))
                 .isInstanceOf(IndexOutOfBoundsException.class);
     }
 
     @Test
     void add() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
 
         assertThat(subject.add("test")).isTrue();
         assertThat(subject.add("other")).isTrue();
@@ -320,7 +317,7 @@ class LazyListTest {
 
     @Test
     void add_index() {
-        LazyList<String> subject = new LazyList<>(singletonList("test"));
+        LazyList<String> subject = LazyList.copyOf(singletonList("test"));
 
         subject.add(0, "first");
         subject.add(1, "second");
@@ -330,14 +327,14 @@ class LazyListTest {
 
     @Test
     void add_index_indexOutOfBounds() {
-        LazyList<String> subject = new LazyList<>(singletonList("test"));
+        LazyList<String> subject = LazyList.copyOf(singletonList("test"));
         assertThatThrownBy(() -> subject.add(2, "last"))
                 .isInstanceOf(IndexOutOfBoundsException.class);
     }
 
     @Test
     void addAll_empty() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
 
         assertThat(subject.addAll(Collections.emptyList())).isFalse();
         assertThat(subject).isEmpty();
@@ -346,14 +343,13 @@ class LazyListTest {
     @Test
     void addAll_unmodifiable() {
         LazyList<String> subject = new LazyList(Collections::emptyList);
-
-        assertThatThrownBy(() -> subject.addAll(singletonList("test")))
-                .isInstanceOf(UnsupportedOperationException.class);
+        List<String> toAdd = singletonList("test");
+        assertThatThrownBy(() -> subject.addAll(toAdd)).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
     void addAll() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
 
         assertThat(subject.addAll(Arrays.asList("test", "other"))).isTrue();
 
@@ -362,7 +358,7 @@ class LazyListTest {
 
     @Test
     void addAll_index() {
-        LazyList<String> subject = new LazyList<>(singletonList("test"));
+        LazyList<String> subject = LazyList.copyOf(singletonList("test"));
 
         assertThat(subject.addAll(0, Arrays.asList("first", "second"))).isTrue();
         assertThat(subject.addAll(3, Arrays.asList("third", "fourth"))).isTrue();
@@ -372,15 +368,15 @@ class LazyListTest {
 
     @Test
     void addAll_index_indexOutOfBounds() {
-        LazyList<String> subject = new LazyList<>(singletonList("test"));
-        assertThatThrownBy(() -> subject.addAll(2, singletonList("last")))
-                .isInstanceOf(IndexOutOfBoundsException.class);
+        LazyList<String> subject = LazyList.copyOf(singletonList("test"));
+        List<String> toAdd = singletonList("last");
+        assertThatThrownBy(() -> subject.addAll(2, toAdd)).isInstanceOf(IndexOutOfBoundsException.class);
     }
 
     @Test
     void removeLazy() {
         Lazy<String> lazy = Lazy.of(() -> "test");
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(lazy);
         subject.addLazy(() -> "other");
 
@@ -393,7 +389,7 @@ class LazyListTest {
 
     @Test
     void removeLazy_indexOutOfBounds() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "test");
 
         assertThatThrownBy(() -> subject.removeLazy(2)).isInstanceOf(IndexOutOfBoundsException.class);
@@ -404,7 +400,7 @@ class LazyListTest {
 
     @Test
     void removeLazy_unmodifiable() {
-        LazyList<String> subject = new LazyList(() -> singletonList(Lazy.of(() -> "test")));
+        LazyList<String> subject = new LazyList<>(() -> singletonList(Lazy.of(() -> "test")));
 
         assertThatThrownBy(() -> subject.removeLazy(0))
                 .isInstanceOf(UnsupportedOperationException.class);
@@ -417,7 +413,7 @@ class LazyListTest {
     @Test
     void remove_not_evaluated() {
         Lazy<String> lazy = Lazy.of(() -> "test");
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(lazy);
 
         assertThat(subject.remove(0)).isNull();
@@ -428,7 +424,7 @@ class LazyListTest {
 
     @Test
     void remove_already_evaluated() {
-        LazyList<String> subject = new LazyList<>(singletonList("test"));
+        LazyList<String> subject = LazyList.copyOf(singletonList("test"));
 
         assertThat(subject.remove(0)).isEqualTo("test");
 
@@ -437,7 +433,7 @@ class LazyListTest {
 
     @Test
     void remove_indexOutOfBounds() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         assertThatThrownBy(() -> subject.remove(2))
                 .isInstanceOf(IndexOutOfBoundsException.class);
     }
@@ -452,7 +448,7 @@ class LazyListTest {
     @Test
     void removeFirst_not_evaluated() {
         Lazy<String> lazy = Lazy.of(() -> "test");
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(lazy);
         subject.addLazy(() -> "other");
 
@@ -464,7 +460,7 @@ class LazyListTest {
 
     @Test
     void removeFirst_already_evaluated() {
-        LazyList<String> subject = new LazyList<>(Arrays.asList("test", "other"));
+        LazyList<String> subject = LazyList.copyOf(Arrays.asList("test", "other"));
 
         assertThat(subject.removeFirst()).isEqualTo("test");
 
@@ -474,20 +470,20 @@ class LazyListTest {
     @Test
     void removeFirst_unmodifiable() {
         LazyList<String> subject = new LazyList<>(() -> Arrays.asList(Lazy.eager("test"), Lazy.eager("other")));
-        assertThatThrownBy(() -> subject.removeFirst())
+        assertThatThrownBy(subject::removeFirst)
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
     void removeFirst_empty() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         assertThatThrownBy(subject::removeFirst).isInstanceOf(NoSuchElementException.class);
     }
 
     @Test
     void removeLast_not_evaluated() {
         Lazy<String> lazy = Lazy.of(() -> "test");
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "first");
         subject.addLazy(lazy);
 
@@ -499,7 +495,7 @@ class LazyListTest {
 
     @Test
     void removeLast_already_evaluated() {
-        LazyList<String> subject = new LazyList<>(Arrays.asList("test", "other"));
+        LazyList<String> subject = LazyList.copyOf(Arrays.asList("test", "other"));
 
         assertThat(subject.removeLast()).isEqualTo("other");
 
@@ -509,19 +505,19 @@ class LazyListTest {
     @Test
     void removeLast_unmodifiable() {
         LazyList<String> subject = new LazyList<>(() -> Arrays.asList(Lazy.eager("test"), Lazy.eager("other")));
-        assertThatThrownBy(() -> subject.removeLast())
+        assertThatThrownBy(subject::removeLast)
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
     void removeLast_empty() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         assertThatThrownBy(subject::removeLast).isInstanceOf(NoSuchElementException.class);
     }
 
     @Test
     void replaceAll_empty() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
 
         subject.replaceAll(s -> s + "suffix");
 
@@ -537,7 +533,7 @@ class LazyListTest {
 
     @Test
     void replaceAll_not_yet_evaluated() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "test");
         subject.addLazy(() -> "other");
 
@@ -550,7 +546,7 @@ class LazyListTest {
 
     @Test
     void replaceAll_already_evaluated() {
-        LazyList<String> subject = new LazyList<>(Arrays.asList("test", "other"));
+        LazyList<String> subject = LazyList.copyOf(Arrays.asList("test", "other"));
 
         subject.replaceAll(s -> s + "suffix");
 
@@ -562,7 +558,7 @@ class LazyListTest {
 
     @Test
     void sort() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "first");
         subject.addLazy(() -> "test");
         subject.addLazy(() -> "other");
@@ -575,15 +571,18 @@ class LazyListTest {
 
     @Test
     void sort_unmodifiable() {
+        final Comparator<String> naturalOrder = Comparator.naturalOrder();
         LazyList<String> subject = new LazyList<>(() -> unmodifiableList(Arrays.asList(Lazy.of(() -> "test"), Lazy.of(() -> "other"))));
-        assertThatThrownBy(() -> subject.sort(Comparator.naturalOrder()))
-                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> subject.sort(naturalOrder)).isInstanceOf(UnsupportedOperationException.class);
         assertThat(subject).containsExactly("test", "other");
     }
 
     @Test
+    @SuppressWarnings({
+            "java:S5838" // We intentionally check hasSize(0) besides isEmpty() here.
+    })
     void size() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         assertThat(subject).hasSize(0).isEqualTo(emptyList()).isEmpty();
 
         subject.addLazy(() -> "test");
@@ -595,7 +594,7 @@ class LazyListTest {
 
     @Test
     void isEmpty() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         assertThat(subject).isEmpty();
 
         subject.addLazy(() -> null);
@@ -610,7 +609,7 @@ class LazyListTest {
         Lazy<String> test = Lazy.of(() -> "test");
         Lazy<String> other = Lazy.of(() -> "other");
         Lazy<String> eager = Lazy.eager("eager");
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "test");
         subject.addLazy(() -> "other");
         subject.addLazy(eager);
@@ -625,13 +624,13 @@ class LazyListTest {
 
     @Test
     void indexOf_empty() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         assertThat(subject.indexOf("test")).isEqualTo(-1);
     }
 
     @Test
     void indexOf() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "zero");
         subject.addLazy(() -> "one");
         subject.addLazy(() -> "two");
@@ -643,7 +642,7 @@ class LazyListTest {
 
     @Test
     void indexOf_null() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "test");
         subject.addLazy(() -> null);
         subject.addLazy(() -> "other");
@@ -654,7 +653,7 @@ class LazyListTest {
 
     @Test
     void indexOf_not_found() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "zero");
         subject.addLazy(() -> "one");
         subject.addLazy(() -> "two");
@@ -665,13 +664,13 @@ class LazyListTest {
 
     @Test
     void lastIndexOf_empty() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         assertThat(subject.lastIndexOf("test")).isEqualTo(-1);
     }
 
     @Test
     void lastIndexOf() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "zero");
         subject.addLazy(() -> "one");
         subject.addLazy(() -> "two");
@@ -682,7 +681,7 @@ class LazyListTest {
 
     @Test
     void lastIndexOf_null() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "test");
         subject.addLazy(() -> null);
         subject.addLazy(() -> "other");
@@ -693,7 +692,7 @@ class LazyListTest {
 
     @Test
     void lastIndexOf_not_found() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "zero");
         subject.addLazy(() -> "one");
         subject.addLazy(() -> "two");
@@ -703,8 +702,11 @@ class LazyListTest {
     }
 
     @Test
+    @SuppressWarnings({
+            "java:S5838" // We intentionally test 'contains', AssertJ's .contains(..) uses iteration.
+    })
     void contains_foundInFirstPass() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "test");
         subject.add("eager");
         subject.addLazy(() -> "other");
@@ -714,8 +716,11 @@ class LazyListTest {
     }
 
     @Test
+    @SuppressWarnings({
+            "java:S5838" // We intentionally test 'contains', AssertJ's .contains(..) uses iteration.
+    })
     void contains_foundInSecondPass() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "test");
         subject.add("eager");
         subject.addLazy(() -> "other");
@@ -725,8 +730,11 @@ class LazyListTest {
     }
 
     @Test
+    @SuppressWarnings({
+            "java:S5838" // We intentionally test 'contains', AssertJ's .contains(..) uses iteration.
+    })
     void contains_notFound() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "test");
         subject.add("eager");
         subject.addLazy(() -> "other");
@@ -736,8 +744,11 @@ class LazyListTest {
     }
 
     @Test
+    @SuppressWarnings({
+            "java:S5838" // We intentionally test 'contains', AssertJ's .contains(..) uses iteration.
+    })
     void contains_null() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> null);
         subject.add("eager");
         subject.addLazy(() -> "other");
@@ -747,6 +758,9 @@ class LazyListTest {
     }
 
     @Test
+    @SuppressWarnings({
+            "java:S5838" // We intentionally test 'contains', AssertJ's .contains(..) uses iteration.
+    })
     void contains_secondPassOnlyForUnevaluatedLazyValues() {
         AtomicBoolean backingContainsCalled = new AtomicBoolean(false);
         LazyList<String> subject = new LazyList<>(() -> new ArrayList<Lazy<String>>() {
@@ -764,7 +778,7 @@ class LazyListTest {
 
     @Test
     void remove_foundInFirstPass() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "other");
         subject.addLazy(() -> "test");
         subject.addLazy(() -> "other");
@@ -807,7 +821,7 @@ class LazyListTest {
     @Test
     void sublist() {
         // given
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "test");
         subject.addLazy(() -> "other");
 
@@ -828,18 +842,21 @@ class LazyListTest {
     }
 
     @Test
+    @SuppressWarnings({
+            "java:S5845" // to test the equals implementation, we intentionally compare dissimilar types.
+    })
     void testEquals() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "test");
         subject.addLazy(() -> "other");
 
         assertThat(subject).isEqualTo(subject)
                 .isNotEqualTo(null)
                 .isNotEqualTo(new Object())
-                .isNotEqualTo(new LazyList<>(singletonList("other")))
-                .isNotEqualTo(new LazyList<>(singletonList("test")))
-                .isNotEqualTo(new LazyList<>(Arrays.asList("other", "test")))
-                .isEqualTo(new LazyList<>(Arrays.asList("test", "other")))
+                .isNotEqualTo(LazyList.copyOf(singletonList("other")))
+                .isNotEqualTo(LazyList.copyOf(singletonList("test")))
+                .isNotEqualTo(LazyList.copyOf(Arrays.asList("other", "test")))
+                .isEqualTo(LazyList.copyOf(Arrays.asList("test", "other")))
                 .isEqualTo(Arrays.asList("test", "other"))
                 .isEqualTo(new ArrayList<>(Arrays.asList("test", "other")))
                 .isEqualTo(new LinkedList<>(Arrays.asList("test", "other")));
@@ -847,12 +864,12 @@ class LazyListTest {
 
     @Test
     void testHashCode() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "test");
         subject.addLazy(() -> "other");
 
         assertThat(subject).hasSameHashCodeAs(subject)
-                .hasSameHashCodeAs(new LazyList<>(Arrays.asList("test", "other")))
+                .hasSameHashCodeAs(LazyList.copyOf(Arrays.asList("test", "other")))
                 .hasSameHashCodeAs(Arrays.asList("test", "other"))
                 .hasSameHashCodeAs(new ArrayList<>(Arrays.asList("test", "other")))
                 .hasSameHashCodeAs(new LinkedList<>(Arrays.asList("test", "other")));
@@ -860,7 +877,7 @@ class LazyListTest {
 
     @Test
     void toString_unresolved() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "test");
         subject.addLazy(() -> "other");
 
@@ -869,7 +886,7 @@ class LazyListTest {
 
     @Test
     void toString_resolved() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.add("test");
         subject.add("other");
 
@@ -878,13 +895,13 @@ class LazyListTest {
 
     @Test
     void forEachAvailable_empty() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.forEachAvailable(s -> fail("Should not be called"));
     }
 
     @Test
     void forEachAvailable() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "one");
         subject.add("two");
         subject.addLazy(() -> "three");
@@ -898,13 +915,13 @@ class LazyListTest {
 
     @Test
     void forEachLazy_empty() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.forEachLazy(s -> fail("Should not be called"));
     }
 
     @Test
     void forEachLazy() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "one");
         subject.add("two");
         subject.addLazy(() -> "three");
@@ -920,7 +937,7 @@ class LazyListTest {
 
     @Test
     void stream() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "one");
         subject.addLazy(() -> "two");
         subject.addLazy(() -> "three");
@@ -937,7 +954,7 @@ class LazyListTest {
 
     @Test
     void streamLazy() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "one");
         subject.add("two");
         subject.addLazy(() -> "three");
@@ -949,7 +966,7 @@ class LazyListTest {
 
     @Test
     void streamAvailable() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "one");
         subject.add("two");
         subject.addLazy(() -> "three");
@@ -965,7 +982,7 @@ class LazyListTest {
 
     @Test
     void parallelStream() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "one");
         subject.addLazy(() -> "two");
         subject.addLazy(() -> "three");
@@ -982,7 +999,7 @@ class LazyListTest {
 
     @Test
     void parallelStreamLazy() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "one");
         subject.add("two");
         subject.addLazy(() -> "three");
@@ -994,7 +1011,7 @@ class LazyListTest {
 
     @Test
     void parallelStreamAvailable() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "one");
         subject.add("two");
         subject.addLazy(() -> "three");
@@ -1010,7 +1027,7 @@ class LazyListTest {
 
     @Test
     void toLazyArray_empty() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
 
         Lazy<String>[] result = subject.toLazyArray();
 
@@ -1019,7 +1036,7 @@ class LazyListTest {
 
     @Test
     void toLazyArray() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "one");
         subject.add("two");
         subject.addLazy(() -> "three");
@@ -1041,7 +1058,7 @@ class LazyListTest {
     @Test
     @SuppressWarnings("unchecked")
     void toLazyArray_zeroSizedArray() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "one");
         subject.add("two");
         subject.addLazy(() -> "three");
@@ -1062,7 +1079,7 @@ class LazyListTest {
 
     @Test
     void spliteratorTest() {
-        LazyList<String> subject = new LazyList<>();
+        LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "one");
         subject.add("two");
         subject.addLazy(() -> "three");
