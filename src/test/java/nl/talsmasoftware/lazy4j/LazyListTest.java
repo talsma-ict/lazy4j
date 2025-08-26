@@ -23,9 +23,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -48,6 +46,27 @@ class LazyListTest {
         assertThat(subject)
                 .isEqualTo(Arrays.asList("test", "other"))
                 .isInstanceOf(RandomAccess.class);
+    }
+
+    @Test
+    void using_null() {
+        assertThatThrownBy(() -> LazyList.using(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("Delegate list may not be <null>");
+    }
+
+    @Test
+    void using_randomAccessList() {
+        assertThat(LazyList.using(new ArrayList<>()))
+                .isInstanceOf(RandomAccess.class)
+                .isEmpty();
+    }
+
+    @Test
+    void using_linkedList() {
+        assertThat(LazyList.using(new LinkedList<>()))
+                .isNotInstanceOf(RandomAccess.class)
+                .isEmpty();
     }
 
     @Test
