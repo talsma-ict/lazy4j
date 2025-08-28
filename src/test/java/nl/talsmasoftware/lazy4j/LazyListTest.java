@@ -70,6 +70,21 @@ class LazyListTest {
     }
 
     @Test
+    void newLazyRandomAccessList_null() {
+        assertThatThrownBy(() -> new LazyList.LazyRandomAccessList<>(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("Delegate list may not be <null>");
+    }
+
+    @Test
+    void newLazyRandomAccessList_delegateNotRandomAccess() {
+        List<Lazy<String>> delegate = new LinkedList<>();
+        assertThatThrownBy(() -> new LazyList.LazyRandomAccessList<>(delegate))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Delegate list must be a RandomAccess list");
+    }
+
+    @Test
     void getLazy() {
         Lazy<String> lazy = Lazy.of(() -> "test");
         LazyList<String> subject = LazyList.using(Arrays.asList(lazy, Lazy.of(() -> "other")));

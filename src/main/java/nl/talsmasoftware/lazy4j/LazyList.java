@@ -16,11 +16,7 @@
 package nl.talsmasoftware.lazy4j;
 
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.IntFunction;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
+import java.util.function.*;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -111,7 +107,20 @@ public class LazyList<T> extends AbstractList<T> {
     }
 
     /**
-     * Creates a new {@code LazyList} backed by the specified list.
+     * Constructor for {@code LazyList} backed by the specified list.
+     *
+     * <p>
+     * This constructor is only intended for subclassed, please consider one of the factory methods
+     * if you want to create a lazy list:
+     * <ul>
+     *     <li>{@link #create()}
+     *     <li>{@link #copyOf(Collection)}
+     *     <li>{@link #using(List)}
+     * </ul>
+     *
+     * <p>
+     * If you wish to create a subclass, please consider whether the delegate list is a {@linkplain RandomAccess} list.
+     * If it is, subclassing the {@link LazyRandomAccessList} may be a better idea.
      *
      * @param delegate The backing list storing the lazy values.
      * @see #using(List)
@@ -863,11 +872,29 @@ public class LazyList<T> extends AbstractList<T> {
         return copy;
     }
 
+    /**
+     * LazyList that implements {@link RandomAccess}.
+     *
+     * @param <T> The type of elements contained in the lazy random-access list.
+     */
     public static class LazyRandomAccessList<T> extends LazyList<T> implements RandomAccess {
+        /**
+         * Constructor intended for subclassed.
+         *
+         * <p>
+         * To create a LazyRandomAccessList, please use one of these factory methods:
+         * <ul>
+         *     <li>{@link LazyList#create()}
+         *     <li>{@link LazyList#copyOf(Collection)}
+         *     <li>{@link LazyList#using(List)}
+         * </ul>
+         *
+         * @param delegate The delegate list, must be a random access list.
+         */
         protected LazyRandomAccessList(List<Lazy<T>> delegate) {
             super(delegate);
             if (!(delegate instanceof RandomAccess)) {
-                throw new IllegalStateException("LazyRandomAccessList requires a RandomAccess delegate.");
+                throw new IllegalArgumentException("Delegate list must be a RandomAccess list.");
             }
         }
     }
