@@ -42,6 +42,7 @@ import static nl.talsmasoftware.lazy4j.LazyUtils.getNullSafe;
  * @param <T> The type of values in the list.
  * @author Sjoerd Talsma
  * @see Lazy
+ * @see LazyRandomAccessList
  * @since 2.0.3
  */
 public class LazyList<T> extends AbstractList<T> {
@@ -873,9 +874,11 @@ public class LazyList<T> extends AbstractList<T> {
     }
 
     /**
-     * LazyList that implements {@link RandomAccess}.
+     * {@link LazyList} that implements {@link RandomAccess}.
      *
-     * @param <T> The type of elements contained in the lazy random-access list.
+     * @param <T> The type of elements contained in the lazy random access list.
+     * @see Lazy
+     * @since 2.0.3
      */
     public static class LazyRandomAccessList<T> extends LazyList<T> implements RandomAccess {
         /**
