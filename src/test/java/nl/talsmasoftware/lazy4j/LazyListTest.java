@@ -737,7 +737,8 @@ class LazyListTest {
 
     @Test
     @SuppressWarnings({
-            "java:S5838" // We intentionally test 'contains', AssertJ's .contains(..) uses iteration.
+            "java:S5838", // We intentionally test 'contains', AssertJ's .contains(..) uses iteration.
+            "java:S5976" // In this situation, separate test cases seem clearer than one parameterized.
     })
     void contains_foundInFirstPass() {
         LazyList<String> subject = LazyList.create();
@@ -751,7 +752,8 @@ class LazyListTest {
 
     @Test
     @SuppressWarnings({
-            "java:S5838" // We intentionally test 'contains', AssertJ's .contains(..) uses iteration.
+            "java:S5838", // We intentionally test 'contains', AssertJ's .contains(..) uses iteration.
+            "java:S5976" // In this situation, separate test cases seem clearer than one parameterized.
     })
     void contains_foundInSecondPass() {
         LazyList<String> subject = LazyList.create();
@@ -779,7 +781,8 @@ class LazyListTest {
 
     @Test
     @SuppressWarnings({
-            "java:S5838" // We intentionally test 'contains', AssertJ's .contains(..) uses iteration.
+            "java:S5838", // We intentionally test 'contains', AssertJ's .contains(..) uses iteration.
+            "java:S5976" // In this situation, separate test cases seem clearer than one parameterized.
     })
     void contains_null() {
         LazyList<String> subject = LazyList.create();
