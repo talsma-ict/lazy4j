@@ -24,7 +24,11 @@ final class LazyUtils {
         return lazy == null ? null : lazy.get();
     }
 
+    static boolean isAvailable(Lazy<?> lazy) {
+        return lazy != null && lazy.isAvailable();
+    }
+
     static <T> T getIfAvailableElseNull(Lazy<T> lazy) {
-        return lazy == null || !lazy.isAvailable() ? null : lazy.get();
+        return isAvailable(lazy) ? lazy.get() : null;
     }
 }
