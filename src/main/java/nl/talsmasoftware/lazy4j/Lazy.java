@@ -66,11 +66,13 @@ public final class Lazy<T> implements Supplier<T> {
      * @param supplier The value supplier for the lazy placeholder
      * @param <T>      The type of the lazy value
      * @return A lazy placeholder for the supplier result that will only obtain it when needed.
+     * @see #eager(Object)
      * @since 2.0.1
      */
+    @SuppressWarnings("unchecked")
     public static <T> Lazy<T> of(Supplier<? extends T> supplier) {
         requireNonNull(supplier, "Lazy function is <null>.");
-        return supplier instanceof Lazy ? (Lazy<T>) supplier : new Lazy<>((Supplier<T>) supplier, null);
+        return supplier instanceof Lazy ? (Lazy<T>) supplier : new Lazy<>(supplier::get, null);
     }
 
     /**
@@ -83,6 +85,7 @@ public final class Lazy<T> implements Supplier<T> {
      * @param value The value to be returned as a lazy object.
      * @param <T>   The type of the value.
      * @return The already-evaluated lazy object always returning the same value.
+     * @see #of(Supplier)
      * @see #isAvailable()
      * @since 2.0.2
      */
@@ -309,8 +312,7 @@ public final class Lazy<T> implements Supplier<T> {
      * @deprecated Factory method was renamed to {@code Lazy.of} in version 2.0.1
      */
     @SuppressWarnings("java:S6355")
-    // Java 8 does not yet support the additional arguments to Deprecated annotation.
-    @Deprecated // (forRemoval = true, since = "2.0.1")
+    @Deprecated // Java 8 does not yet support Deprecated annotation arguments (forRemoval = true, since = "2.0.1")
     public static <T> Lazy<T> lazy(Supplier<T> supplier) {
         return Lazy.of(supplier);
     }
