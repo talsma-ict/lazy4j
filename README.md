@@ -7,6 +7,7 @@
 
 - A `Lazy` class in java.
 - A `LazyValueMap`.
+- A `LazyList`
 
 ## What is it?
 
@@ -19,12 +20,16 @@ remembering the result so it does not need to get called again.
 
 Map that stores values as `Lazy` values.
 
+### LazyList
+
+List that stores values as `Lazy` values.
+
 ## Why?
 
 We feel this ought to be provided out of the box and should have been when lambda's were introduced, back in Java 8.
 
 Fortunately, a `Lazy` class implementation is not very difficult to create, so that's what we did.  
-The `LazyValueMap` was added later in version 2.0.2.
+The `LazyValueMap` was added later in version 2.0.2 and `LazyList` in 2.0.3.
 
 ## Example
 
@@ -75,7 +80,28 @@ The lazy map offers the following lazy variants of standard map methods:
 - `lazyMerge`
 - `lazyValues`
 
-## Getting the class
+### LazyList example
+
+```java
+    // List that stores lazy values that only get evaluated when they are needed for the first time.
+    LazyList<Expensive> lazyValues = LazyList.create();
+
+    lazyValues.addLazy(() -> new Expensive("first"));
+    lazyValues.addLazy(() -> new Expensive("second"));
+```
+
+The expensive values are only evaluated when the values are first accessed.
+
+The lazy list offers the following lazy variants of standard list methods:
+- getLazy / getFirstLazy / getLastLazy
+- setLazy
+- addLazy / addFirstLazy / addLastLazy / addAllLazy
+- streamLazy / streamAvailable / parallelStreamLazy / parallelStreamAvailable
+- replaceAll is performed lazily per value
+
+Please be aware that certain operations such as `sort` or `hashCode` will trigger eager evaluation of all values in the list.
+
+## Getting the classes
 
 Add the following dependency to your project
 or download it [directly from github](https://github.com/talsma-ict/lazy4j/releases):
