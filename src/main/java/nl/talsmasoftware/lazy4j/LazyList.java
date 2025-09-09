@@ -16,7 +16,11 @@
 package nl.talsmasoftware.lazy4j;
 
 import java.util.*;
-import java.util.function.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.IntFunction;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -62,10 +66,11 @@ public class LazyList<T> extends AbstractList<T> {
      *
      * @param <T> The type of lazy values in the list.
      * @return A new, empty {@code LazyList}, behaving like an {@link ArrayList}.
+     * @see #copyOf(Collection)
      * @see #using(List)
      */
     public static <T> LazyList<T> create() {
-        return new LazyRandomAccessList<>(new ArrayList<>());
+        return LazyList.using(new ArrayList<>());
     }
 
     /**
@@ -77,10 +82,11 @@ public class LazyList<T> extends AbstractList<T> {
      * @param toCopy The collection to copy the contents from.
      * @param <T>    The type of lazy values in the list.
      * @return A new {@code LazyList} with the same contents as the specified collection.
+     * @see #create()
      * @see #using(List)
      */
     public static <T> LazyList<T> copyOf(Collection<? extends T> toCopy) {
-        return new LazyRandomAccessList<>(copyToLazyArrayList(toCopy));
+        return LazyList.using(copyToLazyArrayList(toCopy));
     }
 
     /**
@@ -102,6 +108,8 @@ public class LazyList<T> extends AbstractList<T> {
      * @param backingList The backing list (required, must provide a non-{@code null} list).
      * @param <T>         The type of lazy values in the list.
      * @return A new {@code LazyList} backed by the specified list.
+     * @see #create()
+     * @see #copyOf(Collection)
      */
     public static <T> LazyList<T> using(List<Lazy<T>> backingList) {
         return backingList instanceof RandomAccess ? new LazyRandomAccessList<>(backingList) : new LazyList<>(backingList);
