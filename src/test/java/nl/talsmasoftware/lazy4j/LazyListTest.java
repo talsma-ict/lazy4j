@@ -15,15 +15,27 @@
  */
 package nl.talsmasoftware.lazy4j;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.RandomAccess;
+import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.unmodifiableList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -31,6 +43,21 @@ import static org.junit.jupiter.api.Assertions.fail;
 class LazyListTest {
 
     @Test
+    @DisplayName("create: Implements RandomAccess and LazyList.")
+    void create_implementsRandomAccessList() {
+        LazyList<String> subject = LazyList.create();
+        assertThat(subject).isInstanceOf(RandomAccess.class).isInstanceOf(LazyList.class);
+    }
+
+    @Test
+    @DisplayName("copyOf: Implements RandomAccess and LazyList.")
+    void copyOf_implementsRandomAccessList() {
+        LazyList<String> subject = LazyList.copyOf(emptySet());
+        assertThat(subject).isInstanceOf(RandomAccess.class).isInstanceOf(LazyList.class);
+    }
+
+    @Test
+    @DisplayName("copyOf: Does not evaluate lazy values of existing LazyList.")
     void copyOf_existingLazyList() {
         Lazy<String> test = Lazy.of(() -> "test");
         Lazy<String> other = Lazy.of(() -> "other");
@@ -44,8 +71,8 @@ class LazyListTest {
         assertThat(test.isAvailable()).isFalse();
         assertThat(other.isAvailable()).isFalse();
         assertThat(subject)
-                .isEqualTo(Arrays.asList("test", "other"))
-                .isInstanceOf(RandomAccess.class);
+                .isInstanceOf(RandomAccess.class)
+                .isEqualTo(Arrays.asList("test", "other"));
     }
 
     @Test
@@ -588,6 +615,24 @@ class LazyListTest {
         assertThat(subject.getLazy(0).isAvailable()).isFalse();
         assertThat(subject.getLazy(1).isAvailable()).isFalse();
         assertThat(subject).hasSize(2).containsExactly("testsuffix", "othersuffix");
+    }
+
+    @Test
+    void replaceAll_delegateContainingNulls() {
+        // given
+        List<Lazy<String>> delegate = new ArrayList<>();
+        Lazy<String> lazy = Lazy.of(() -> "test");
+        delegate.add(lazy);
+        delegate.add(null);
+        LazyList<String> subject = LazyList.using(delegate);
+
+        // when
+        subject.replaceAll(s -> s + "suffix");
+
+        // then
+        assertThat(subject.getLazy(0).isAvailable()).isFalse();
+        assertThat(subject.getLazy(1)).isNull();
+        assertThat(subject).hasSize(2).containsExactly("testsuffix", null);
     }
 
     @Test
