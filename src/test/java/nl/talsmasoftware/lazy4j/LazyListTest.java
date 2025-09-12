@@ -618,6 +618,24 @@ class LazyListTest {
     }
 
     @Test
+    void replaceAll_delegateContainingNulls() {
+        // given
+        List<Lazy<String>> delegate = new ArrayList<>();
+        Lazy<String> lazy = Lazy.of(() -> "test");
+        delegate.add(lazy);
+        delegate.add(null);
+        LazyList<String> subject = LazyList.using(delegate);
+
+        // when
+        subject.replaceAll(s -> s + "suffix");
+
+        // then
+        assertThat(subject.getLazy(0).isAvailable()).isFalse();
+        assertThat(subject.getLazy(1)).isNull();
+        assertThat(subject).hasSize(2).containsExactly("testsuffix", null);
+    }
+
+    @Test
     void sort() {
         LazyList<String> subject = LazyList.create();
         subject.addLazy(() -> "first");

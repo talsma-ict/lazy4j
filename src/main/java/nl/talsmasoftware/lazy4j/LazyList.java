@@ -26,32 +26,37 @@ import java.util.stream.Stream;
 import static java.util.Objects.requireNonNull;
 import static nl.talsmasoftware.lazy4j.LazyUtils.getIfAvailableElseNull;
 import static nl.talsmasoftware.lazy4j.LazyUtils.getNullSafe;
+import static nl.talsmasoftware.lazy4j.LazyUtils.isAvailable;
 
 /**
- * A list that can store its values in a {@link Lazy} manner.
+ * A list that stores its values as {@link Lazy} references.
  *
  * <p>
  * This has the advantage that while providing 'standard' {@link List} features,
  * unused values do not need to be evaluated.
  *
  * <p>
- * The behaviour of this list depends on the delegate list it was {@link #using(List) initialized} with.<br>
- * If the delegate list is mutable, the lazy list will be mutable as well.<br>
- * If the delegate list is thread-safe, the lazy list will be thread-safe as well.<br>
- * If the lazy list is sorted, its purpose may be defeated because all values have to be evaluated eagerly for comparison.<br>
- * The {@link #create()} and {@link #copyOf(Collection)} methods create a lazy list that behaves like an {@link ArrayList}.<br>
- * If the backing list does <em>not</em> support {@code null} values, the lazy list <em>will</em> support them,
- * because the values are wrapped in a {@link Lazy} object, therefore will never be {@code null} in the backing map.
+ * The characteristics of this list depend on the delegate list it was initialized with, see {@link #using(List)}.
+ * <ul>
+ *     <li>If the delegate list is mutable, the lazy list will be mutable as well.
+ *     <li>If the delegate list is thread-safe, the lazy list will be thread-safe as well.
+ *     <li>If the lazy list is sorted, its purpose may be defeated because all values have to be evaluated eagerly for comparison.
+ * </ul>
+ *
+ * <p>
+ * The {@link #create()} and {@link #copyOf(Collection)} methods create a new lazy list with the characteristics of an {@link ArrayList}.
  *
  * @param <T> The type of values in the list.
  * @author Sjoerd Talsma
+ * @implNote If the backing list does <em>not</em> support {@code null} values, the lazy list <em>will</em> support them,
+ * because all values are wrapped in {@link Lazy} references, therefore will never be {@code null} in the backing map.
  * @see Lazy
  * @see LazyRandomAccessList
  * @since 2.0.3
  */
 public class LazyList<T> extends AbstractList<T> {
     /**
-     * The delegate list containing the lazy values.
+     * The delegate list containing the lazy value references.
      */
     private final List<Lazy<T>> delegate;
 
@@ -116,10 +121,10 @@ public class LazyList<T> extends AbstractList<T> {
     }
 
     /**
-     * Constructor for {@code LazyList} backed by the specified list.
+     * Constructor for {@code LazyList} backed by the specified {@code delegate} list.
      *
      * <p>
-     * This constructor is only intended for subclassed, please consider one of the factory methods
+     * This constructor is only intended for subclasses, please consider one of the factory methods
      * if you want to create a lazy list:
      * <ul>
      *     <li>{@link #create()}
@@ -129,10 +134,11 @@ public class LazyList<T> extends AbstractList<T> {
      *
      * <p>
      * If you wish to create a subclass, please consider whether the delegate list is a {@linkplain RandomAccess} list.
-     * If it is, subclassing the {@link LazyRandomAccessList} may be a better idea.
+     * If it is, implementing {@link RandomAccess} or subclassing the {@link LazyRandomAccessList} may be a good idea.
      *
-     * @param delegate The backing list storing the lazy values.
+     * @param delegate The backing list storing the lazy value references.
      * @see #using(List)
+     * @see LazyRandomAccessList
      */
     protected LazyList(List<Lazy<T>> delegate) {
         this.delegate = requireNonNull(delegate, "Delegate list may not be <null>.");
@@ -436,7 +442,7 @@ public class LazyList<T> extends AbstractList<T> {
      */
     @Override
     public void replaceAll(UnaryOperator<T> operator) {
-        delegate.replaceAll(lazy -> lazy.map(operator));
+        delegate.replaceAll(lazy -> lazy == null ? null : lazy.map(operator));
     }
 
     /**
@@ -449,7 +455,7 @@ public class LazyList<T> extends AbstractList<T> {
      */
     @Override
     public void sort(Comparator<? super T> comparator) {
-        delegate.sort(Comparator.comparing(Lazy::get, comparator));
+        delegate.sort(Comparator.comparing(LazyUtils::getNullSafe, comparator));
     }
 
     /**
@@ -523,7 +529,7 @@ public class LazyList<T> extends AbstractList<T> {
      * @return The index of the first matching element, or {@code -1} if no match was found.
      * @implNote Note that getting the index of an element may evaluate more elements
      * than calling {@link #contains(Object)} does, because the latter uses a two-pass algorithm
-     * where the first pass checks the available values only.
+     * where the first pass only checks available values.
      * @see #contains(Object)
      * @see #streamAvailable()
      * @see #streamLazy()
@@ -564,7 +570,7 @@ public class LazyList<T> extends AbstractList<T> {
      * @return {@code true} if the list contains the specified value, {@code false} otherwise.
      * @implNote This implementation uses a two-pass algorithm where the first pass checks available values only.
      * This avoids unnecessary eager evaluation of lazy values when the searched value is already evaluated.
-     * If the method returns {@code false}, <em>all</em> lazy values have been evaluated.
+     * If the method returns {@code false}, <em>all</em> lazy values in the list have been evaluated.
      * @see #streamAvailable()
      * @see #streamLazy()
      * @see #containsAll(Collection)
@@ -574,7 +580,7 @@ public class LazyList<T> extends AbstractList<T> {
         // First pass, only check the already-available values.
         boolean requiresSecondPass = false;
         for (Lazy<T> lazyValue : delegate) {
-            if (!lazyValue.isAvailable()) {
+            if (!isAvailable(lazyValue)) {
                 requiresSecondPass = true;
             } else if (Objects.equals(value, lazyValue.get())) {
                 return true;
@@ -599,7 +605,7 @@ public class LazyList<T> extends AbstractList<T> {
         boolean requiresSecondPass = false;
         for (Iterator<Lazy<T>> it = delegate.iterator(); it.hasNext(); ) {
             Lazy<T> lazyValue = it.next();
-            if (!lazyValue.isAvailable()) {
+            if (!isAvailable(lazyValue)) {
                 requiresSecondPass = true;
             } else if (Objects.equals(value, lazyValue.get())) {
                 it.remove();
@@ -654,7 +660,8 @@ public class LazyList<T> extends AbstractList<T> {
      */
     @Override
     public int hashCode() {
-        // Calculate hashcode for actual elements, not the delegate's (lazy) entries.
+        // Calculate hashcode for actual (eager) elements, not the delegate's (lazy) entries.
+        // This is required by the general contract of List.
         return super.hashCode();
     }
 
@@ -725,7 +732,9 @@ public class LazyList<T> extends AbstractList<T> {
      */
     public void forEachAvailable(Consumer<? super T> action) {
         for (Lazy<T> lazy : delegate) {
-            lazy.ifAvailable(action);
+            if (isAvailable(lazy)) {
+                action.accept(lazy.get());
+            }
         }
     }
 
