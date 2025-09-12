@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Module for a lazy evaluation in java.
+ * Module for lazy evaluation in java.
  */
 module nl.talsmasoftware.lazy4j {
 
