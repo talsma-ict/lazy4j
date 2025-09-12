@@ -24,24 +24,23 @@ import java.util.function.Supplier;
 import static java.util.Objects.requireNonNull;
 
 /**
- * A generic `Lazy` class in java.
+ * Generic `Lazy` class in java.
  *
  * <p>
- * The {@link #lazy(Supplier) lazy} factory method takes a {@linkplain Supplier} for a value
+ * The {@link #of(Supplier) Lazy.of} factory method takes a {@linkplain Supplier}
  * and wraps it so that it gets called <em>only when first-needed</em>.<br>
  * Results are <em>cached</em>.
  *
  * <p>
  * A {@code Lazy} value can be {@linkplain #map(Function) mapped} or
  * {@linkplain #flatMap(Function) flat mapped} into another {@code Lazy} value.
+ * The mapping function will only be called when the resulting value is actually needed for the first time.
  *
  * <p>
- * {@code Lazy} objects are thread-safe. For every {@link Lazy} instance,
- * the supplier gets called either <em>never</em> or <em>once</em>.
- *
- * <p>
- * There is one exception to this rule; if a RuntimeException is thrown,
- * the value is re-evaluated until the result is obtained without an exception.
+ * {@code Lazy} objects are thread-safe.<br>For every {@link Lazy} instance,
+ * the supplier gets called either <em>never</em> or <em>once</em>*.<br>
+ * (*) There is one exception to this rule; if a RuntimeException is thrown,
+ * the value is re-evaluated on successive invocations until the result is obtained without an exception.
  *
  * @param <T> The type that is lazily evaluated.
  * @author Sjoerd Talsma
@@ -94,7 +93,7 @@ public final class Lazy<T> implements Supplier<T> {
     }
 
     /**
-     * Constructor for unevaluated lazy object.
+     * Constructor for a new lazy object.
      *
      * @param supplier The supplier.
      * @param result   The result.

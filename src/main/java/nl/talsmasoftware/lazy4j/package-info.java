@@ -14,26 +14,28 @@
  * limitations under the License.
  */
 /**
- * A generic {@link nl.talsmasoftware.lazy4j.Lazy} class for java.
- *
- * <p>
- * Java 8 defines a generic {@link java.util.Optional} type and a {@link java.util.function.Supplier} function
- * for use with lambda's, but unfortunately, there is no such thing as
- * a 'lazy supplier function that re-uses the result'.
+ * Lazy evaluation in Java.
  *
  * <p>
  * This is often useful for expensive operations that need to be performed at most once,
- * only if they are actually needed.
- * Declaring a 'lazy supplier' function is a common pattern for this
- * and can be easily defined with the introduction of Lambda's in Java 8.
+ * and only if they are actually needed.<br>
+ * Declaring a 'lazy supplier' function is a common pattern for this,
+ * implemented by the {@link nl.talsmasoftware.lazy4j.Lazy} class.
+ *
+ * <h2>Lazy values</h2>
+ * The following class supports lazy values:
+ * <ul>
+ *     <li>{@link nl.talsmasoftware.lazy4j.Lazy} - a {@link java.util.function.Supplier} function for a lazily evaluated value.
+ *     After the first successful evaluation, the result is cached and reused for subsequent calls.
+ * </ul>
  *
  * <h2>Lazy collections</h2>
- * The following collection implementations are provided containing lazy values:
+ * The following collections support lazy values:
  * <ul>
- *     <li>{@link nl.talsmasoftware.lazy4j.LazyList} - a {@link java.util.List} of lazy values,
- *     behaving like a regular list.
- *     <li>{@link nl.talsmasoftware.lazy4j.LazyValueMap} - a {@link java.util.Map} of lazy values,
- *     behaving like a regular map.
+ *     <li>{@link nl.talsmasoftware.lazy4j.LazyList} - of lazy values,
+ *     behaving like a regular {@link java.util.List} with additional methods interacting with the lazy values.
+ *     <li>{@link nl.talsmasoftware.lazy4j.LazyValueMap} - of lazy values,
+ *     behaving like a regular {@link java.util.Map} with additional methods interacting with the lazy values.
  * </ul>
  *
  * @author Sjoerd Talsma
