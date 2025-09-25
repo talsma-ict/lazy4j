@@ -69,7 +69,7 @@
 
         <!-- test -->
         <junit.version>5.13.4</junit.version>
-        <assertj.version>3.27.5</assertj.version>
+        <assertj.version>3.27.6</assertj.version>
         <slf4j.version>2.0.17</slf4j.version>
         <logback.version>1.5.18</logback.version>
 
