@@ -139,5 +139,5 @@ libraryDependencies += "nl.talsmasoftware" % "lazy4j" % "[see maven-central badg
   [coveralls]: <https://coveralls.io/github/talsma-ict/lazy4j>
   [javadoc-img]: <https://www.javadoc.io/badge/nl.talsmasoftware/lazy4j.svg>
   [javadoc]: <https://www.javadoc.io/doc/nl.talsmasoftware/lazy4j>
-  [lazy-javadoc-page]: <https://www.javadoc.io/static/nl.talsmasoftware/lazy4j/2.0.0/nl.talsmasoftware.lazy4j/nl/talsmasoftware/lazy4j/package-summary.html>
+  [lazy-javadoc-page]: <https://javadoc.io/doc/nl.talsmasoftware/lazy4j/latest/nl.talsmasoftware.lazy4j/nl/talsmasoftware/lazy4j/Lazy.html>
   
