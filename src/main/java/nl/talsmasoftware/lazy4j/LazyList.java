@@ -49,7 +49,7 @@ import static nl.talsmasoftware.lazy4j.LazyUtils.isAvailable;
  * @param <T> The type of values in the list.
  * @author Sjoerd Talsma
  * @implNote If the backing list does <em>not</em> support {@code null} values, the lazy list <em>will</em> support them,
- * because all values are wrapped in {@link Lazy} references, therefore will never be {@code null} in the backing map.
+ * because all values are wrapped in {@link Lazy} references, therefore will never be {@code null} in the backing list.
  * @see Lazy
  * @see LazyRandomAccessList
  * @since 2.0.3
