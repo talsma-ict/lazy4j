@@ -233,8 +233,8 @@ public final class Lazy<T> implements Supplier<T> {
      * object's {@linkplain #get()} method is called.
      *
      * <p>
-     * The resulting {@code Supplier} from the mapping function is
-     * eagerly evaluated (a most once) precisely when the resulting
+     * Both the mapping function and the resulting Supplier are
+     * lazily evaluated (and remembered) precisely when the resulting
      * lazy value is evaluated.
      *
      * @param <U>    The type of the value returned by the resulting lazy reference
