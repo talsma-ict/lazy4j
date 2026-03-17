@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 Talsma ICT
+ * Copyright 2018-2026 Talsma ICT
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * Module for lazy evaluation in java.
- */
+
+/// Lazy evaluation module for java.
 module nl.talsmasoftware.lazy4j {
 
     exports nl.talsmasoftware.lazy4j;

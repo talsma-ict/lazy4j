@@ -194,7 +194,7 @@
                         </goals>
                         <configuration>
                             <jdkToolchain>
-                                <version>[25,)</version>
+                                <version>25</version>
                             </jdkToolchain>
                             <doclet>nl.talsmasoftware.umldoclet.UMLDoclet</doclet>
                             <docletArtifact>
@@ -215,6 +215,14 @@
                                 </tag>
                             </tags>
                             <disableNoFonts>true</disableNoFonts>
+                            <debug>true</debug>
+                            <detectJavaApiLink>false</detectJavaApiLink>
+                            <offlineLinks>
+                                <offlineLink>
+                                    <location>${project.basedir}/.mvn/javadoc/jdk25</location>
+                                    <url>https://docs.oracle.com/en/java/javase/25/docs/api/</url>
+                                </offlineLink>
+                            </offlineLinks>
                         </configuration>
                     </execution>
                 </executions>
@@ -393,7 +401,6 @@
                         <configuration>
                             <publishingServerId>central</publishingServerId>
                             <autoPublish>true</autoPublish>
-                            <!--<waitUntil>published</waitUntil>-->
                         </configuration>
                     </plugin>
                 </plugins>
