@@ -17,7 +17,6 @@ package nl.talsmasoftware.lazy4j;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -360,7 +359,7 @@ public class LazyList<T> extends AbstractList<T> {
     /// So even if the underlying _value_ is already available, the operator will not be applied immediately.
     ///
     /// @param operator The operator to lazily apply to each element.
-    /// @see Lazy#map(Function)
+    /// @see Lazy#map(java.util.function.Function)
     @Override
     public void replaceAll(UnaryOperator<T> operator) {
         delegate.replaceAll(lazy -> lazy == null ? null : lazy.map(operator));
