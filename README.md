@@ -61,8 +61,8 @@ Please refer to the [Lazy class documentation][lazy-javadoc-page] for full descr
 
 ```java
     // Map that stores lazy values that only get evaluated when they are needed for the first time.
-    private final LazyValueMap<String, String> lazyMap = new LazyValueMap(HashMap::new);
-    private final LazyValueMap<String, String> sortedLazyMap = new LazyValueMap(TreeMap::new);
+    private final LazyValueMap<String, Expensive> lazyMap = new LazyValueMap(HashMap::new);
+    private final LazyValueMap<String, Expensive> sortedLazyMap = new LazyValueMap(TreeMap::new);
 
     lazyMap.putLazy("key", () -> new Expensive());
 ```
