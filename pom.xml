@@ -51,7 +51,7 @@
         <developer>
             <id>sjoerd</id>
             <name>Sjoerd Talsma</name>
-            <email>sjoerd@talsma-ict.nl</email>
+            <email>sjoerdtalsma@users.noreply.github.com</email>
             <url>https://github.com/sjoerdtalsma</url>
         </developer>
     </developers>
@@ -268,7 +268,7 @@
                 <plugin>
                     <groupId>org.sonatype.central</groupId>
                     <artifactId>central-publishing-maven-plugin</artifactId>
-                    <version>0.11.0</version>
+                    <version>0.12.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.sonarsource.scanner.maven</groupId>
@@ -340,8 +340,8 @@
 
     <repositories>
         <repository>
-            <id>sonatype-snapshots</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>central-snapshots</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots</url>
             <releases>
                 <enabled>false</enabled>
             </releases>
@@ -460,10 +460,10 @@
                             </execution>
                         </executions>
                         <configuration>
+                            <strictCheck>true</strictCheck>
                             <properties>
                                 <owner>${project.organization.name}</owner>
                             </properties>
-                            <strictCheck>true</strictCheck>
                             <mapping>
                                 <java>SLASHSTAR_STYLE</java>
                             </mapping>
@@ -491,4 +491,5 @@
             </build>
         </profile>
     </profiles>
+
 </project>
