@@ -39,6 +39,9 @@ import static java.util.Objects.requireNonNull;
 /// (*) There is one exception to this rule; if a RuntimeException is thrown,
 /// the value is re-evaluated on successive invocations until the result is obtained without an exception.
 ///
+/// To resolve [hashcode][#hashCode()] or [equality][#equals(Object)] of `Lazy` objects, they *must* be eagerly evaluated.
+/// This makes them less than ideal to use in Sets or as keys in `Map` like structures.
+///
 /// @param <T> The type that is lazily evaluated.
 /// @author Sjoerd Talsma
 @SuppressWarnings("java:S3077") // We use reference-based thread safety, so volatile actually is what we want.
