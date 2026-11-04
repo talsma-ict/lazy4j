@@ -46,6 +46,10 @@ import static java.util.Objects.requireNonNull;
 /// @author Sjoerd Talsma
 @SuppressWarnings("java:S3077") // We use reference-based thread safety, so volatile actually is what we want.
 public final class Lazy<T> implements Supplier<T> {
+    /// Private final field to use as synchronization lock and recursion detector.
+    /// A boolean ThreadLocal is chosen over a Stack walker because we want to _prevent_ recursion.
+    /// This would mean a Stack walker in our use-case would need to walk the entire stack in 'normal' use cases.
+    private final ThreadLocal<Boolean> recursionDetector = new ThreadLocal<>();
     private volatile Supplier<T> supplier;
     private volatile T result;
 
@@ -95,13 +99,23 @@ public final class Lazy<T> implements Supplier<T> {
 
     /// Eagerly evaluates the lazy supplier (at most once)
     ///
-    /// This uses double-checked locking which is safe in modern JVMs
+    /// - This uses double-checked locking which is safe in modern JVMs
+    /// - This uses the `recursionDetector` field to detect recursion during the eager evaluation.
     private void forceEagerEvaluation() {
         if (supplier != null) {
-            synchronized (this) {
+            synchronized (recursionDetector) {  // lock private final field to avoid synchronizing on 'this'.
                 if (supplier != null) {
-                    result = supplier.get();
-                    supplier = null;
+                    try {
+                        if (Boolean.TRUE.equals(recursionDetector.get())) {
+                            throw new IllegalStateException("Recursion detected in Lazy evaluation.");
+                        }
+                        recursionDetector.set(Boolean.TRUE);
+
+                        result = supplier.get();
+                        supplier = null;
+                    } finally {
+                        recursionDetector.remove();
+                    }
                 }
             }
         }
@@ -241,7 +255,6 @@ public final class Lazy<T> implements Supplier<T> {
     ///   - `"Lazy.unresolved"` if the value was not yet resolved.
     ///   - `"Lazy[value]"` if the value was already resolved,
     ///     where `<value>` is equivalent to `Objects.toString(Lazy.get())`.
-    ///
     ///
     /// @return String representation of this `Lazy` object.
     @Override

@@ -16,6 +16,7 @@
 package nl.talsmasoftware.lazy4j;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -299,6 +300,21 @@ class LazyTest {
         assertThat(lazyString.isAvailable()).isTrue();
         assertThat(mayonaise.isAvailable()).isTrue();
         assertThat(counter.get()).isOne();
+    }
+
+    @Test
+    @DisplayName("recursive evaluation: should be handled gracefully (issue #345)")
+    void recursiveEvaluationShouldBeHandledGracefully() {
+        // given
+        final Supplier<String>[] supplierHolder = new Supplier[]{() -> "DOH!"};
+        Lazy<String> recursiveLazy = Lazy.lazy(counting(() -> supplierHolder[0].get()));
+        supplierHolder[0] = recursiveLazy::get;
+
+        // when
+        assertThatThrownBy(recursiveLazy::get)
+                // then
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(counter.get()).isEqualTo(1);
     }
 
     <T> Supplier<T> counting(Supplier<T> supplier) {
