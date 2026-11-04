@@ -304,16 +304,21 @@ class LazyTest {
 
     @Test
     @DisplayName("recursive evaluation: should be handled gracefully (issue #345)")
+    @SuppressWarnings({
+            "unchecked",
+            "java:S1612" // using method reference here would bind the method to the early supplier thereby not getting the recursion.
+    })
     void recursiveEvaluationShouldBeHandledGracefully() {
         // given
-        final Supplier<String>[] supplierHolder = new Supplier[]{() -> "DOH!"};
-        Lazy<String> recursiveLazy = Lazy.lazy(counting(() -> supplierHolder[0].get()));
-        supplierHolder[0] = recursiveLazy::get;
+        final Supplier<String>[] supplierHolder = new Supplier[]{() -> ""};
+        Lazy<String> recursiveLazy = Lazy.of(counting(() -> supplierHolder[0].get()));
+        supplierHolder[0] = recursiveLazy;
 
         // when
         assertThatThrownBy(recursiveLazy::get)
                 // then
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .message().containsIgnoringCase("recursion detected");
         assertThat(counter.get()).isEqualTo(1);
     }
 
