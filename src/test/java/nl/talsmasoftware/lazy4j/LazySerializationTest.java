@@ -20,11 +20,13 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 class LazySerializationTest {
@@ -54,6 +56,19 @@ class LazySerializationTest {
         assertThat(subject.isAvailable()).isTrue();
         assertThat(subject.getIfAvailable()).contains("The quick brown fox jumps over the lazy dog.");
         assertThat(subject.get()).isEqualTo("The quick brown fox jumps over the lazy dog.");
+    }
+
+    @Test
+    void serializeLazyReferenceOfNonSerializableObject() {
+        // given
+        Lazy<Object> subject = Lazy.of(Object::new);
+
+        // when
+        assertThatThrownBy(() -> serialize(subject))
+                // then
+                .isInstanceOf(AssertionError.class)
+                .cause()
+                .isInstanceOf(NotSerializableException.class);
     }
 
     static byte[] serialize(Serializable object) {
