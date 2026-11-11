@@ -15,6 +15,7 @@
  */
 package nl.talsmasoftware.lazy4j;
 
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -42,15 +43,18 @@ import static java.util.Objects.requireNonNull;
 /// To resolve [hashcode][#hashCode()] or [equality][#equals(Object)] of `Lazy` objects, they *must* be eagerly evaluated.
 /// This makes them less than ideal to use in Sets or as keys in `Map` like structures.
 ///
+/// Lazy instances are [Serializable] _if_ the result object is `Serializable`.
+/// Before serializing the lazy value is eagerly evaluated. The supplier function is never serialized.
+///
 /// @param <T> The type that is lazily evaluated.
 /// @author Sjoerd Talsma
 @SuppressWarnings("java:S3077") // We use reference-based thread safety, so volatile actually is what we want.
-public final class Lazy<T> implements Supplier<T> {
+public final class Lazy<T> implements Supplier<T>, Serializable {
     /// Private final field to use as synchronization lock and recursion detector.
     /// A boolean ThreadLocal is chosen over a Stack walker because we want to _prevent_ recursion.
     /// This would mean a Stack walker in our use-case would need to walk the entire stack in 'normal' use cases.
-    private final ThreadLocal<Boolean> recursionDetector = new ThreadLocal<>();
-    private volatile Supplier<T> supplier;
+    private final transient ThreadLocal<Boolean> recursionDetector = new ThreadLocal<>();
+    private transient volatile Supplier<T> supplier;
     private volatile T result;
 
     /// Create a [Lazy] object that calls the specified `supplier`
@@ -260,6 +264,17 @@ public final class Lazy<T> implements Supplier<T> {
     @Override
     public String toString() {
         return isAvailable() ? "Lazy[" + get() + ']' : "Lazy.unresolved";
+    }
+
+    /// This method forces eager evaluation before returning `this` to indicate regular serialization of the now-evaluated value.
+    ///
+    /// The absence of the [#recursionDetector] in the deserialized version of the object shouldn't matter,
+    /// because eagerly evaluated objects do not need recursion detection anymore.
+    ///
+    /// @return `this` after eager evaluation of the value was done.
+    private Object writeReplace() {
+        forceEagerEvaluation();
+        return this;
     }
 
     /// Create a [Lazy] object that calls the specified `supplier`
