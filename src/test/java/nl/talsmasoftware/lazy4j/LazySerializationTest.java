@@ -15,6 +15,7 @@
  */
 package nl.talsmasoftware.lazy4j;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -23,7 +24,8 @@ import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.util.RandomAccess;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 class LazySerializationTest {
 
     @Test
+    @DisplayName("Lazy: Serialization forces eager evaluation.")
     void serializationForcesEagerEvaluation() {
         // given
         Lazy<String> subject = Lazy.of(() -> "The quick brown fox jumps over the lazy dog.");
@@ -45,7 +48,8 @@ class LazySerializationTest {
     }
 
     @Test
-    void deserializedLazyValueIsEagerlyEvaluated() {
+    @DisplayName("Lazy: Deserialized lazy value is actually eagerly evaluated.")
+    void deserializedLazyValueIsEagerlyEvaluated() throws IOException {
         // given
         byte[] serializedSubject = serialize(Lazy.of(() -> "The quick brown fox jumps over the lazy dog."));
 
@@ -59,6 +63,7 @@ class LazySerializationTest {
     }
 
     @Test
+    @DisplayName("Lazy: Non-serializable lazy values throw NotSerializableException.")
     void serializeLazyReferenceOfNonSerializableObject() {
         // given
         Lazy<Object> subject = Lazy.of(Object::new);
@@ -66,30 +71,56 @@ class LazySerializationTest {
         // when
         assertThatThrownBy(() -> serialize(subject))
                 // then
-                .isInstanceOf(AssertionError.class)
-                .cause()
                 .isInstanceOf(NotSerializableException.class);
     }
 
-    static byte[] serialize(Serializable object) {
+    @Test
+    @DisplayName("LazyList: All values get eagerly evaluated upon serialization.")
+    void lazyListGetsEagerlyEvaluatedUponSerialization() throws IOException {
+        // given
+        LazyList<String> subject = LazyList.of(() -> "The quick brown fox jumps over the lazy dog.");
+
+        // when
+        LazyList<String> result = deserialize(serialize(subject));
+
+        // then
+        assertThat(result).isNotNull().isInstanceOf(RandomAccess.class);
+        assertThat(result.streamAvailable().collect(Collectors.toList())).hasSize(1);
+    }
+    
+    @Test
+    @DisplayName("LazyValueMap: All values get eagerly evaluated upon serialization.")
+    void lazyValueMapGetsEagerlyEvaluatedUponSerialization() throws IOException {
+        // given
+        LazyValueMap<String, String> subject = new LazyValueMap<>();
+        subject.putLazy("key", () -> "The quick brown fox jumps over the lazy dog.");
+        assertThat(subject.getLazy("key").isAvailable()).isFalse();
+
+        // when
+        LazyValueMap<String, String> result = deserialize(serialize(subject));
+
+        // then
+        assertThat(result.getLazy("key").isAvailable()).isTrue();
+        assertThat(result.get("key")).isEqualTo("The quick brown fox jumps over the lazy dog.");
+    }
+
+    static byte[] serialize(Object object) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ObjectOutputStream oos = new ObjectOutputStream(baos)) {
             oos.writeObject(object);
             oos.flush();
             baos.flush();
             return baos.toByteArray();
-        } catch (IOException e) {
-            throw new AssertionError("Failure serializing object: " + e.getMessage(), e);
         }
     }
 
     @SuppressWarnings("unchecked")
-    static <S extends Serializable> S deserialize(byte[] bytes) {
+    static <T> T deserialize(byte[] bytes) throws IOException {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
              ObjectInputStream ois = new ObjectInputStream(bais)) {
-            return (S) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            throw new AssertionError("Failure deserializing object: " + e.getMessage(), e);
+            return (T) ois.readObject();
+        } catch (ClassNotFoundException e) {
+            throw new AssertionError("Class to deserialize not found: " + e.getMessage(), e);
         }
     }
 }

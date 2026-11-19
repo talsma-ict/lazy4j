@@ -44,15 +44,13 @@ import static java.util.Objects.requireNonNull;
 /// This makes them less than ideal to use in Sets or as keys in `Map` like structures.
 ///
 /// Lazy instances are [Serializable] _if_ the result object is `Serializable`.
-/// Before serializing the lazy value is eagerly evaluated. The supplier function is never serialized.
+/// Before serializing, the lazy value has to be eagerly evaluated. The supplier function does not get serialized.
 ///
 /// @param <T> The type that is lazily evaluated.
 /// @author Sjoerd Talsma
 @SuppressWarnings("java:S3077") // We use reference-based thread safety, so volatile actually is what we want.
 public final class Lazy<T> implements Supplier<T>, Serializable {
-    /// Private final field to use as synchronization lock and recursion detector.
-    /// A boolean ThreadLocal is chosen over a Stack walker because we want to _prevent_ recursion.
-    /// This would mean a Stack walker in our use-case would need to walk the entire stack in 'normal' use cases.
+    /// Field to use as synchronization lock and recursion detector.
     private final transient ThreadLocal<Boolean> recursionDetector = new ThreadLocal<>();
     private transient volatile Supplier<T> supplier;
     private volatile T result;
