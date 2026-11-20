@@ -52,6 +52,7 @@ import static nl.talsmasoftware.lazy4j.LazyUtils.isAvailable;
 /// @since 2.0.3
 public class LazyList<T> extends AbstractList<T> implements Serializable {
     /// The delegate list containing the lazy value references.
+    @SuppressWarnings("java:S1948") // We're serializable _if_ the delegate list is.
     private final List<Lazy<T>> delegate;
 
     /// Creates a new, empty `LazyList`.

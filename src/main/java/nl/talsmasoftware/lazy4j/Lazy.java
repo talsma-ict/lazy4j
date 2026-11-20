@@ -53,6 +53,7 @@ public final class Lazy<T> implements Supplier<T>, Serializable {
     /// Field to use as synchronization lock and recursion detector.
     private final transient ThreadLocal<Boolean> recursionDetector = new ThreadLocal<>();
     private transient volatile Supplier<T> supplier;
+    @SuppressWarnings("java:S1948") // We're serializable _if_ the result is.
     private volatile T result;
 
     /// Create a [Lazy] object that calls the specified `supplier`

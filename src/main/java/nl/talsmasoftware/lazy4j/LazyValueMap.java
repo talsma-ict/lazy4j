@@ -52,6 +52,7 @@ import static nl.talsmasoftware.lazy4j.LazyUtils.getNullSafe;
 /// @since 2.0.2
 public class LazyValueMap<K, V> extends AbstractMap<K, V> implements Serializable {
     /// The delegate map containing the lazy values.
+    @SuppressWarnings("java:S1948") // We're serializable _if_ the delegate map is.
     private final Map<K, Lazy<V>> delegate;
 
     /// Creates a new empty `LazyValueMap`, behaving like a [LinkedHashMap].
