@@ -15,11 +15,13 @@
  */
 package nl.talsmasoftware.lazy4j;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -48,8 +50,9 @@ import static nl.talsmasoftware.lazy4j.LazyUtils.isAvailable;
 /// @see Lazy
 /// @see LazyRandomAccessList
 /// @since 2.0.3
-public class LazyList<T> extends AbstractList<T> {
+public class LazyList<T> extends AbstractList<T> implements Serializable {
     /// The delegate list containing the lazy value references.
+    @SuppressWarnings("java:S1948") // We're serializable _if_ the delegate list is.
     private final List<Lazy<T>> delegate;
 
     /// Creates a new, empty `LazyList`.
@@ -77,6 +80,14 @@ public class LazyList<T> extends AbstractList<T> {
     /// @see #using(List)
     public static <T> LazyList<T> copyOf(Collection<? extends T> toCopy) {
         return LazyList.using(copyToLazyArrayList(toCopy));
+    }
+
+    /// Creates a new `LazyList` backed by the results from all suppliers without evaluating them yet.
+    ///
+    /// @param lazyValues The lazy values for the list.
+    /// @return A new lazy list containing the supplied lazy values.
+    public static <T> LazyList<T> of(Supplier<T>... lazyValues) {
+        return LazyList.using(Stream.of(lazyValues).map(Lazy::of).collect(Collectors.toList()));
     }
 
     /// Creates a new `LazyList` backed by a list to contain the [Lazy] values.

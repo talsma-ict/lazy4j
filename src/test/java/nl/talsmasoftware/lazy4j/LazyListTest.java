@@ -29,6 +29,7 @@ import java.util.RandomAccess;
 import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -73,6 +74,27 @@ class LazyListTest {
         assertThat(subject)
                 .isInstanceOf(RandomAccess.class)
                 .isEqualTo(Arrays.asList("test", "other"));
+    }
+
+    @Test
+    @DisplayName("of: Suppliers may not be null.")
+    @SuppressWarnings("rawtypes")
+    void of_nulls() {
+        assertThatThrownBy(() ->LazyList.of((Supplier) null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("Lazy function is <null>");
+    }
+
+    @Test
+    void of() {
+        // given
+        LazyList<String> subject = LazyList.of(() -> "first", () -> "second");
+
+        // then
+        assertThat(subject).hasSize(2);
+        assertThat(subject.streamAvailable().collect(Collectors.toList())).isEmpty();
+        assertThat(subject).hasSameHashCodeAs(List.of("first", "second"));
+        assertThat(subject.streamAvailable().collect(Collectors.toList())).hasSize(2);
     }
 
     @Test

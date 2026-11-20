@@ -15,6 +15,7 @@
  */
 package nl.talsmasoftware.lazy4j;
 
+import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -49,8 +50,9 @@ import static nl.talsmasoftware.lazy4j.LazyUtils.getNullSafe;
 /// @author Sjoerd Talsma
 /// @see Lazy
 /// @since 2.0.2
-public class LazyValueMap<K, V> extends AbstractMap<K, V> {
+public class LazyValueMap<K, V> extends AbstractMap<K, V> implements Serializable {
     /// The delegate map containing the lazy values.
+    @SuppressWarnings("java:S1948") // We're serializable _if_ the delegate map is.
     private final Map<K, Lazy<V>> delegate;
 
     /// Creates a new empty `LazyValueMap`, behaving like a [LinkedHashMap].
