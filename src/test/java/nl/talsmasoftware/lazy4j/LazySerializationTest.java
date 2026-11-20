@@ -101,7 +101,7 @@ class LazySerializationTest {
 
         // then
         assertThat(result.getLazy("key").isAvailable()).isTrue();
-        assertThat(result.get("key")).isEqualTo("The quick brown fox jumps over the lazy dog.");
+        assertThat(result).containsEntry("key", "The quick brown fox jumps over the lazy dog.");
     }
 
     static byte[] serialize(Object object) throws IOException {
